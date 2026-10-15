@@ -13,7 +13,7 @@ Status: proposal, v0.1, 2026-10-14. Decisions marked **Decided** were made by Be
 | D5 | Each organizer is merchant of record on its own Stripe account; OMP never holds funds | Proposed, gated by probe 4 and 5 | Keeps OMP outside money-transmission and PCI service-provider scope at $0 cost |
 | D6 | Tickets are issuer-signed Ed25519 tokens, verifiable offline; door dedupe via a local scanner mesh | Proposed, gated by probe 8 | Works in a gym with no Wi-Fi; one authoritative issuer per event |
 | D7 | PWA first; no native apps in v1 | Proposed | Wallet-pass signing needs a legal entity and centralizes a certificate; a 300-cap show does not need an app |
-| D8 | Server in TypeScript on Postgres; scanner and fan views as PWAs | Proposed | Largest contributor pool; matches founder's existing stack; one language across server, schemas and clients |
+| D8 | Server in TypeScript; SQLite (Node's built-in `node:sqlite`) for the demo and self-host path, Postgres for the hosted multi-tenant instance later; scanner and fan views as PWAs | Adopted 2026-10-15 (SQLite first) | Largest contributor pool; one language across server, schemas and clients; a single-file database makes self-hosting trivial for a school |
 
 ## 2. Goals, non-goals, principles
 

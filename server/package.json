@@ -1,0 +1,26 @@
+{
+  "name": "@omp/server",
+  "version": "0.1.0",
+  "description": "Open Music Performance API server and public pages: AT-shaped record store on SQLite, lexicon-validated writes, event pages with JSON-LD and iCal, free RSVP that issues signed tickets.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/main.ts",
+    "start": "node src/main.ts",
+    "seed": "node src/seed-cli.ts",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@atproto/lexicon": "^0.7.16",
+    "@hono/node-server": "^1.14.0",
+    "@omp/schemas": "0.1.0",
+    "@omp/tickets": "0.1.0",
+    "hono": "^4.7.0",
+    "multiformats": "^13.3.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5"
+  }
+}
