@@ -88,6 +88,11 @@ export class RecordStore {
     return row.next - 1;
   }
 
+  /** Ensure the next serial for an event is at least `floor` (used after importing tickets). */
+  setSerialFloor(eventUri: string, floor: number): void {
+    this.db.prepare("INSERT INTO serials (event_uri, next) VALUES (?, ?) ON CONFLICT(event_uri) DO UPDATE SET next = MAX(next, excluded.next)").run(eventUri, floor);
+  }
+
   countReferencing(collection: string, uri: string): number {
     return this.listReferencing(collection, uri, 100_000).length;
   }

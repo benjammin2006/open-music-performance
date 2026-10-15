@@ -9,10 +9,11 @@ import type { Services } from "./services.ts";
 import { localToUtc, isValidTimeZone } from "./time.ts";
 import { dashboardPage, eventAdminPage, eventFormValues, newEventPage, orgPage, signInPage, type EventFormValues } from "./pages/admin.ts";
 import type { Event, Order, Organization, Program, Ticket, TicketClass } from "./types.ts";
+import type { ExportBundle } from "./portability.ts";
 
 const COOKIE = "omp_session";
 
-export function mountAdmin(app: Hono, deps: { store: RecordStore; keys: IssuerKeys; svc: Services; auth: Auth; baseUrl: string }) {
+export function mountAdmin(app: Hono, deps: { store: RecordStore; keys: IssuerKeys; svc: Services; auth: Auth; baseUrl: string; exportBundle: (did: string) => Promise<ExportBundle> }) {
   const { store, keys, svc, auth, baseUrl } = deps;
   const secure = baseUrl.startsWith("https");
   const firstOrg = (did: string) => store.list<Organization>(did, C.organization, 1)[0] ?? null;
@@ -50,6 +51,13 @@ export function mountAdmin(app: Hono, deps: { store: RecordStore; keys: IssuerKe
     const events = store.list<Event>(did, C.event).sort((a, b) => b.record.startsAt.localeCompare(a.record.startsAt));
     const counts = new Map(events.map((e) => [e.uri, store.listReferencing<Ticket>(C.ticket, e.uri, 100_000).length]));
     return c.html(dashboardPage(firstOrg(did), events, counts));
+  });
+
+  app.get("/admin/export.json", async (c) => {
+    const did = didOf(c);
+    const bundle = await deps.exportBundle(did);
+    const slug = did.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, 60);
+    return c.body(JSON.stringify(bundle, null, 2), 200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="omp-export-${slug}-${bundle.exportedAt.slice(0, 10)}.json"`, "Cache-Control": "private, no-store" });
   });
 
   app.get("/admin/org", (c) => {

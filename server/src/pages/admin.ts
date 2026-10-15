@@ -15,7 +15,8 @@ ${bad ? `<p class="card" role="alert">That key was not accepted.</p>` : ""}
 
 export function dashboardPage(org: Stored<Organization> | null, events: Stored<Event>[], counts: Map<string, number>): string {
   const rows = events.map((e) => `<div class="card"><div class="row"><div><a href="/admin/events/${esc(e.rkey)}"><strong>${esc(e.record.title)}</strong></a><div class="fine">${esc(whenLocal(e.record.startsAt, e.record.timezone, { dateStyle: "medium", timeStyle: "short" }))} · ${esc(e.record.location.name)}</div></div><div><span class="fine">${esc(e.record.status)}</span> · ${counts.get(e.uri) ?? 0} tickets</div></div></div>`).join("");
-  return layout({ title: "Organizer dashboard", body: `${nav(org)}<h1>${esc(org?.record.name ?? "Your events")}</h1><p class="noprint"><a class="btn" href="/admin/events/new">New event</a></p>${rows || "<p class='fine'>No events yet.</p>"}` });
+  return layout({ title: "Organizer dashboard", body: `${nav(org)}<h1>${esc(org?.record.name ?? "Your events")}</h1><p class="noprint"><a class="btn" href="/admin/events/new">New event</a></p>${rows || "<p class='fine'>No events yet.</p>"}
+<h2>Your data</h2><p class="fine"><a href="/admin/export.json">Download a signed export</a> of every record this organization holds here: events, programs, orders, tickets, door scans, donations. It is one JSON file in the published schema, signed by this instance, and it imports into any other OMP instance with <code>omp import</code>. No secrets are included.</p>` });
 }
 
 export interface EventFormValues { title: string; description: string; startsAt: string; endsAt: string; doorsAt: string; locationName: string; streetAddress: string; locality: string; region: string; postalCode: string; capacity: string; accessibilityNotes: string; ageRestriction: string; refundText: string; processorNote: string; tags: string }

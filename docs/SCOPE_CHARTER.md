@@ -80,5 +80,6 @@ A working demo replaces weeks 1 to 4 of the probe plan; see `docs/DEMO_PLAN.md`.
 | Date | Change |
 |---|---|
 | 2026-10-14 | Charter created |
+| 2026-10-15 | Self-host packaging (Dockerfile, compose, Caddy), first-run setup page, signed export with verify and import CLI; container build unverified (no Docker host available) |
 | 2026-10-15 | Demo track adopted: a walking-skeleton demo replaces probe weeks 1 to 4; gate is pilot commitments (section 9) |
 | 2026-10-15 | Added rule: v1 holds no student PII (no student accounts or rosters), after finding NY Ed Law 2-d and IL SOPPA cover free teacher-adopted tools; district data agreements go through the SDPC NDPA when needed |

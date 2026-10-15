@@ -1,0 +1,10 @@
+# Automatic HTTPS for the domain in OMP_DOMAIN. For a LAN-only or demo box set OMP_DOMAIN=localhost (self-signed).
+{$OMP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy omp:3000
+	header {
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+	}
+}

@@ -1,0 +1,36 @@
+# Self-hosted Open Music Performance: the app plus Caddy for automatic HTTPS.
+# 1. cp .env.example .env and set OMP_DOMAIN, OMP_BASE_URL, OMP_ADMIN_TOKEN.
+# 2. docker compose up -d
+# 3. Open https://$OMP_DOMAIN/setup to create your organization. See docs/SELF_HOST.md.
+services:
+  omp:
+    build: .
+    restart: unless-stopped
+    environment:
+      OMP_BASE_URL: ${OMP_BASE_URL:-http://localhost:3000}
+      OMP_ADMIN_TOKEN: ${OMP_ADMIN_TOKEN:?set OMP_ADMIN_TOKEN in .env}
+      OMP_DB_PATH: /data/omp.sqlite
+    volumes:
+      - omp-data:/data
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - omp
+    environment:
+      OMP_DOMAIN: ${OMP_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  omp-data:
+  caddy-data:
+  caddy-config:

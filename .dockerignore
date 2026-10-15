@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+data
+**/dist
+.git
+research_notes
+reports
+docs
+*.md
+!README.md
+.claude
+.githooks

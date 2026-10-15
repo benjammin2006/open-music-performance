@@ -17,6 +17,10 @@ import { attendanceCsv, reconcile, summaryCsv, type DoorScanRecord, type Donatio
 import { getCookie, setCookie } from "hono/cookie";
 import { Auth } from "./auth.ts";
 import { mountAdmin } from "./admin.ts";
+import { InstanceKey, exportBundle } from "./portability.ts";
+import { setupDonePage, setupPage } from "./pages/setup.ts";
+import { isValidTimeZone } from "./time.ts";
+import { randomToken } from "./auth.ts";
 import { esc, layout } from "./render.ts";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -36,13 +40,51 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
   const svc = new Services(store, keys);
   const auth = new Auth(db);
   const app = new Hono();
-  const admin = mountAdmin(app, { store, keys, svc, auth, baseUrl: cfg.baseUrl });
+  const instanceKey = new InstanceKey(db);
+  const admin = mountAdmin(app, { store, keys, svc, auth, baseUrl: cfg.baseUrl, exportBundle: (did) => exportBundle(store, instanceKey, did, cfg.baseUrl) });
 
   app.get("/healthz", (c) => c.json({ ok: true, ns: NS }));
 
   app.get("/", (c) => {
     const orgs = store.list<Organization>(null, C.organization, 50);
-    return c.html(layout({ title: "Open Music Performance", body: `<h1>Events</h1>${orgs.map((o) => `<div class="card"><a href="/o/${esc(o.did)}"><strong>${esc(o.record.name)}</strong></a></div>`).join("") || "<p class='fine'>Nothing here yet. Run <code>npm run seed</code>.</p>"}` }));
+    if (orgs.length === 0) return c.redirect("/setup");
+    return c.html(layout({ title: "Open Music Performance", body: `<h1>Events</h1>${orgs.map((o) => `<div class="card"><a href="/o/${esc(o.did)}"><strong>${esc(o.record.name)}</strong></a></div>`).join("")}` }));
+  });
+
+  // The instance's export-signing key, so anyone holding a bundle can check which instance signed it.
+  app.get("/.well-known/omp.json", async (c) => {
+    const k = await instanceKey.get();
+    return c.json({ instance: cfg.baseUrl, kid: k.kid, alg: "Ed25519", publicKeyMultibase: k.publicKeyMultibase, exportFormat: "org.openmusicperformance.export/1" });
+  });
+
+  // First-run setup: only while the instance has no organizations.
+  const isEmpty = () => store.list(null, C.organization, 1).length === 0;
+  app.get("/setup", (c) => (isEmpty() ? c.html(setupPage(cfg.baseUrl)) : c.redirect("/admin")));
+  app.post("/setup", async (c) => {
+    if (!isEmpty()) return c.redirect("/admin", 303);
+    const b = await c.req.parseBody();
+    const s = (k: string, max = 200) => String(b[k] ?? "").trim().slice(0, max);
+    const slug = s("slug", 40).toLowerCase();
+    const tz = s("timezone", 64);
+    if (!/^[a-z0-9-]{2,40}$/.test(slug)) return c.html(setupPage(cfg.baseUrl, "Short id must be 2 to 40 lowercase letters, digits or dashes."), 400);
+    if (!isValidTimeZone(tz)) return c.html(setupPage(cfg.baseUrl, `Unknown timezone "${tz}".`), 400);
+    const host = new URL(cfg.baseUrl).host.replace(":", "%3A");
+    const did = `did:web:${host}:org:${slug}`;
+    const locationName = s("locationName");
+    try {
+      const org = await store.put<Organization>(did, C.organization, {
+        name: s("name"), kind: s("kind", 40) || "other", timezone: tz, ...(s("website", 500) ? { website: s("website", 500) } : {}),
+        ...(locationName ? { location: { name: locationName, ...(s("locality", 100) ? { locality: s("locality", 100) } : {}), ...(s("region", 100) ? { region: s("region", 100) } : {}), country: "US" } } : {}),
+        createdAt: new Date().toISOString(),
+      });
+      await keys.provision(did, org.rkey, `${slug}-${new Date().getUTCFullYear()}-1`);
+      const organizerKey = await auth.issueKey(did, "setup", randomToken());
+      setCookie(c, "omp_session", await auth.createSession(did), { httpOnly: true, sameSite: "Lax", path: "/", secure: cfg.baseUrl.startsWith("https"), maxAge: 30 * 86400 });
+      return c.html(setupDonePage(org.record.name, did, organizerKey));
+    } catch (e) {
+      if (e instanceof ValidationError) return c.html(setupPage(cfg.baseUrl, e.message), 400);
+      throw e;
+    }
   });
 
   // Organization page and calendar feed.
@@ -232,7 +274,7 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
     return eventPage({ org, event, classes, performances, program, baseUrl: cfg.baseUrl, ...(notice ? { notice } : {}) });
   }
 
-  return { app, store, keys, svc, auth };
+  return { app, store, keys, svc, auth, instanceKey };
 }
 
 function firstOrg(store: RecordStore, did: string): Stored<Organization> | null {

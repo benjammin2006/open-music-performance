@@ -79,6 +79,10 @@ Card processing fees (roughly 2.9% + 30 cents per charge) still apply to paid ti
 
 Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## Self-hosting
+
+One Docker Compose file: the app, Caddy for automatic HTTPS, one data volume. First visit to an empty instance creates its organization. Every organizer can download a signed export of all their records and import it into any other instance with `npm run omp -- import`. See [docs/SELF_HOST.md](docs/SELF_HOST.md).
+
 ## Status
 
 OMP is in the planning stage, and no code exists yet. The landscape research was completed on 2026-10-14 and is in [reports/](reports/Open%20music%20ticketing%20landscape.md). The first build is a six-minute working demo (create a concert, buy a ticket on the organizer's own Stripe test account, check in offline, reconcile, export) that doubles as the first test of demand: the measure is how many organizations commit to running a real concert on it. See [docs/DEMO_PLAN.md](docs/DEMO_PLAN.md), [docs/SCOPE_CHARTER.md](docs/SCOPE_CHARTER.md) and, for the assumptions the demo is testing, [docs/PROBE_PLAN.md](docs/PROBE_PLAN.md).
