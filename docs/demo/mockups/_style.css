@@ -1,0 +1,22 @@
+/* Shared look for the scene-6 mock-ups: the app's visual language, light theme for projectors and print. */
+:root { --ink:#1b1b1f; --muted:#5c5f66; --line:#e2e3e8; --bg:#fbfbfc; --accent:#2a5bd7; --accent-ink:#fff; --ok:#1d7a4a; --warn:#b7791f; --mock:#7a1dd1; }
+* { box-sizing:border-box; } html, body { margin:0; background:#fff; }
+body { width:1280px; font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+.mock { background:var(--mock); color:#fff; font-weight:700; letter-spacing:.04em; text-transform:uppercase; font-size:.85rem; padding:.45rem 1.25rem; display:flex; justify-content:space-between; }
+header.site { border-bottom:1px solid var(--line); padding:.6rem 1.25rem; font-size:.9rem; color:var(--muted); display:flex; justify-content:space-between; }
+header.site a { color:var(--accent); text-decoration:none; }
+main { padding:1.25rem 1.25rem 1.75rem; }
+h1 { font-size:1.9rem; line-height:1.15; margin:.1rem 0 .3rem; } h2 { font-size:1.15rem; margin:1.3rem 0 .5rem; }
+.meta { color:var(--muted); margin:0 0 .8rem; } .meta div { margin:.1rem 0; }
+.card { border:1px solid var(--line); border-radius:10px; padding:1rem 1.1rem; margin:.7rem 0; background:#fff; }
+.grid { display:grid; gap:.8rem; } .cols-2 { grid-template-columns:1fr 1fr; } .cols-3 { grid-template-columns:1fr 1fr 1fr; } .cols-4 { grid-template-columns:repeat(4,1fr); }
+table { border-collapse:collapse; width:100%; background:#fff; } td, th { text-align:left; padding:.45rem .5rem; border-bottom:1px solid var(--line); vertical-align:top; } th { color:var(--muted); font-weight:600; font-size:.85rem; }
+td.num, th.num { text-align:right; font-variant-numeric: tabular-nums; } tfoot th { border-top:2px solid var(--line); color:var(--ink); }
+.btn { font:inherit; font-weight:600; background:var(--accent); color:var(--accent-ink); border:0; border-radius:8px; padding:.55rem .95rem; display:inline-block; }
+.btn.secondary { background:#e9ebf2; color:var(--ink); }
+.pill { display:inline-block; border-radius:999px; padding:.15rem .6rem; font-size:.8rem; font-weight:600; }
+.pill.ok { background:#dcf3e6; color:var(--ok); } .pill.warn { background:#fbeed6; color:var(--warn); } .pill.muted { background:#eceef3; color:var(--muted); }
+.fine { color:var(--muted); font-size:.9rem; } .big { font-size:2rem; font-weight:700; line-height:1.1; }
+.sig { border-top:1px dashed var(--line); padding-top:.6rem; margin-top:.6rem; font-size:.9rem; }
+.sig b { display:block; } code { background:#eef0f5; padding:.05rem .3rem; border-radius:4px; font-size:.85em; }
+footer { border-top:1px solid var(--line); margin-top:1.25rem; padding-top:.7rem; color:var(--muted); font-size:.85rem; }

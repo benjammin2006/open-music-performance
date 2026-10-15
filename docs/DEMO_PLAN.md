@@ -46,7 +46,7 @@ Stack per ARCHITECTURE.md D8: TypeScript server on Postgres, PWAs for event page
 | Scanner PWA | Claude for verification core, Codex for UI | `apps/scanner/` : camera scan, offline verify, local admitted set, cash and comp logging, manual name-list check-in, printed list export | Scripted 300-scan test on two phones in airplane mode: 0 duplicate admits on one device, 15 scans/min (this is probe 8) |
 | Event page, admin, reconciliation, poster | Codex from a bounded brief | `apps/web/` : create and publish, event page with JSON-LD and iCal, RSVP and buy flows, program, reconciliation sheet, CSV export, signed export bundle download | Playwright run of scenes 1, 2, 4, 5; axe accessibility check passes |
 | Self-host | Codex | `docker-compose.yml`, `.env.example`, `docs/SELF_HOST.md` | Fresh clone to running instance in under 10 minutes on a clean machine |
-| Settlement mock-ups | Ben or Codex | Three static images in `docs/demo/mockups/` | Reviewed, labeled "mock-up" in the image |
+| Settlement mock-ups | Done 2026-10-15 | Three static images in `docs/demo/mockups/` (HTML sources plus `render.sh`) | Reviewed, labeled "mock-up" in the image |
 
 Rules for the lanes: every Codex lane gets an explicit file allowlist, an isolated branch and the verify command above; a boundary guard reverts out-of-allowlist writes; Codex never touches `packages/tickets/` or `server/payments/`. Claude reviews every lane's diff before merge.
 
