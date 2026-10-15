@@ -81,7 +81,7 @@ Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Status
 
-OMP is in the planning stage, and no code exists yet. The landscape research was completed on 2026-10-14 and is in [reports/](reports/Open%20music%20ticketing%20landscape.md). Before any code is written, a four-week probe plan tests the riskiest assumptions, from educator demand to offline check-in in a gym with no Wi-Fi. See [docs/PROBE_PLAN.md](docs/PROBE_PLAN.md) and [docs/SCOPE_CHARTER.md](docs/SCOPE_CHARTER.md).
+OMP is in the planning stage, and no code exists yet. The landscape research was completed on 2026-10-14 and is in [reports/](reports/Open%20music%20ticketing%20landscape.md). The first build is a six-minute working demo (create a concert, buy a ticket on the organizer's own Stripe test account, check in offline, reconcile, export) that doubles as the first test of demand: the measure is how many organizations commit to running a real concert on it. See [docs/DEMO_PLAN.md](docs/DEMO_PLAN.md), [docs/SCOPE_CHARTER.md](docs/SCOPE_CHARTER.md) and, for the assumptions the demo is testing, [docs/PROBE_PLAN.md](docs/PROBE_PLAN.md).
 
 ## How to help
 

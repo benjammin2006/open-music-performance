@@ -1,5 +1,7 @@
 # Probe plan: four weeks before any code
 
+> **Amended 2026-10-15.** Weeks 1 to 4 below are superseded by [DEMO_PLAN.md](DEMO_PLAN.md): a working demo now runs first and its pilot-commitment count is the decision gate. Probes 8, 10, 11 and 12 still run as written; probes 1 and 2 become the five questions asked after every demo showing; probes 3, 5, 6, 7 and 9 are unchanged and move to the settlement wedge. The probe definitions, scripts and specs below remain the reference for all of them.
+
 Source: `reports/Open music ticketing landscape.md`, section "Load-bearing assumptions to probe before building" (12 assumptions), plus segment (d) in `research_notes/Open music ticketing landscape/artist_venue_friction.md`.
 
 Decisions already made, and not re-litigated here: v1 beachhead is school and community ensembles; the artist-to-venue settlement tool is the second wedge; no blockchain in v1; a fiscal sponsor (HCB or Open Source Collective) holds the trademark and schemas, with a later founder-owned operator LLC; AGPL open core plus a small hosted operator, each organizer as merchant of record on its own Stripe account, venue-signed offline-verifiable tickets, AT-Protocol-shaped schemas.

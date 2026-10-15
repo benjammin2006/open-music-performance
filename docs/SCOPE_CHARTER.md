@@ -71,9 +71,14 @@ Stripe Connect split payouts may start only after a money-transmission counsel o
 
 12 months from first commit to the v1 "done" trigger, reviewed quarterly against this charter. Budget assumption: 10 hours per week. A quarterly review that finds work outside section 2 stops that work or amends this charter in writing first.
 
-## 9. Change log
+## 9. Demo track (amended 2026-10-15)
+
+A working demo replaces weeks 1 to 4 of the probe plan; see `docs/DEMO_PLAN.md`. The demo is a subset of the section 2 product list and is the start of v1, not a throwaway: the schema document comes first, and ticket signing and verification get tests in the same diff. The decision gate is pilot commitments, counted after 10 showings or by December 20, 2026: 3 or more (at least one K-12) builds v1; 3 or more with no K-12 narrows v1 to community, church, college and booster-run events; fewer than 3 with venue interest moves the venue interviews forward; fewer than 3 and no venue interest pauses the project. Probes 8, 10, 11 and 12 survive; probes 1 and 2 become the five questions asked after every showing; probes 3, 5, 6, 7 and 9 move to the settlement wedge unchanged. Section 7's "probe 1 fails" condition is read as "the demo gate returns fewer than 3 commitments."
+
+## 10. Change log
 
 | Date | Change |
 |---|---|
 | 2026-10-14 | Charter created |
+| 2026-10-15 | Demo track adopted: a walking-skeleton demo replaces probe weeks 1 to 4; gate is pilot commitments (section 9) |
 | 2026-10-15 | Added rule: v1 holds no student PII (no student accounts or rosters), after finding NY Ed Law 2-d and IL SOPPA cover free teacher-adopted tools; district data agreements go through the SDPC NDPA when needed |
