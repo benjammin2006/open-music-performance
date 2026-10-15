@@ -10,6 +10,9 @@ services:
       OMP_BASE_URL: ${OMP_BASE_URL:-http://localhost:3000}
       OMP_ADMIN_TOKEN: ${OMP_ADMIN_TOKEN:?set OMP_ADMIN_TOKEN in .env}
       OMP_DB_PATH: /data/omp.sqlite
+      OMP_STRIPE_SECRET_KEY: ${OMP_STRIPE_SECRET_KEY:-}
+      OMP_STRIPE_WEBHOOK_SECRET: ${OMP_STRIPE_WEBHOOK_SECRET:-}
+      OMP_STRIPE_CLIENT_ID: ${OMP_STRIPE_CLIENT_ID:-}
     volumes:
       - omp-data:/data
     expose:

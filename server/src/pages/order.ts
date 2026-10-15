@@ -15,3 +15,20 @@ ${tickets.map(({ ticket, qrSvg }, i) => `<div class="card" style="text-align:cen
 </div>`).join("")}
 <p class="noprint"><button type="button" onclick="window.print()">Print tickets</button> <a class="btn" href="/e/${esc(event.did)}/${esc(event.rkey)}">Back to event</a></p>` });
 }
+
+/** A paid order that is not settled: still pending at Stripe, cancelled, or failed. */
+export function pendingOrderPage(event: Stored<Event>, order: Stored<Order>): string {
+  const e = event.record;
+  const st = order.record.status;
+  const eventUrl = `/e/${esc(event.did)}/${esc(event.rkey)}`;
+  const body = st === "pending"
+    ? `<h1>Finishing your order</h1>
+<p role="status">We are waiting for the payment confirmation for <strong>${esc(e.title)}</strong>. This page refreshes itself; your tickets will appear here as soon as the payment clears. If you closed the payment page without paying, you can cancel below and nothing will be charged.</p>
+<p class="fine">Order ${esc(order.rkey)} · ${esc(order.record.buyer.name)} · total ${esc((order.record.total.amountCents / 100).toFixed(2))} ${esc(order.record.total.currency)}</p>
+<p class="noprint"><a class="btn" href="/order/${esc(order.did)}/${esc(order.rkey)}">Check again</a> <form method="post" action="/order/${esc(order.did)}/${esc(order.rkey)}/cancel" style="display:inline"><button type="submit" class="secondary">Cancel this order</button></form></p>`
+    : `<h1>${st === "cancelled" ? "Order cancelled" : "Order not completed"}</h1>
+<p role="status">${st === "cancelled" ? "Nothing was charged and the seats were released." : "This order did not go through. If you were charged, the organizer will refund you; please contact them with the order id below."}</p>
+<p class="fine">Order ${esc(order.rkey)}${order.record.notes ? ` · ${esc(order.record.notes)}` : ""}</p>
+<p class="noprint"><a class="btn" href="${eventUrl}">Back to the event</a></p>`;
+  return layout({ title: `${st === "pending" ? "Finishing your order" : "Order"} · ${e.title}`, body, ...(st === "pending" ? { head: `<meta http-equiv="refresh" content="6">` } : {}) });
+}

@@ -9,7 +9,11 @@ export interface EventPageData {
   performances: Stored<Performance>[];
   program: Stored<Program> | null;
   baseUrl: string;
+  /** The organizer has connected a payment account, so paid classes show a buy form. */
+  paymentsReady: boolean;
   notice?: string;
+  /** The notice is a problem, not a confirmation. */
+  error?: boolean;
 }
 
 export function eventPage(d: EventPageData): string {
@@ -45,7 +49,9 @@ export function eventPage(d: EventPageData): string {
       ? `<span class="fine">Sold out</span>`
       : free
         ? rsvpForm(d.event, cls)
-        : `<form method="post" action="${esc(url)}/checkout" class="noprint"><input type="hidden" name="ticketClass" value="${esc(cls.rkey)}"><button type="submit">Buy tickets</button> <span class="fine">Secure checkout on the organizer's own payment account.</span></form>`;
+        : d.paymentsReady
+          ? buyForm(d.event, cls)
+          : `<p class="fine">Online purchase is not open yet for this organizer. Pay at the door, or check back soon.</p>`;
     return `<div class="card"><div class="row"><div><strong>${esc(c.name)}</strong>${c.description ? `<div class="fine">${esc(c.description)}</div>` : ""}${remaining !== null && !soldOut && remaining <= 20 ? `<div class="fine">${remaining} left</div>` : ""}</div><div class="price">${money(c.price.amountCents, c.price.currency)}${free ? "" : " <span class=\"fine\">all in</span>"}</div></div>${action}</div>`;
   }).join("");
 
@@ -58,7 +64,7 @@ export function eventPage(d: EventPageData): string {
     : "";
 
   const body = `
-${d.notice ? `<p class="card ok" role="status">${esc(d.notice)}</p>` : ""}
+${d.notice ? `<p class="card${d.error ? "" : " ok"}" role="${d.error ? "alert" : "status"}">${esc(d.notice)}</p>` : ""}
 <h1>${esc(e.title)}</h1>
 ${d.org ? `<p class="meta"><a href="/o/${esc(d.org.did)}">${esc(d.org.record.name)}</a></p>` : ""}
 <div class="meta">
@@ -89,6 +95,22 @@ function rsvpForm(event: Stored<Event>, cls: Stored<TicketClass>): string {
   <label for="qty-${esc(cls.rkey)}">Seats (up to ${limit})</label><input id="qty-${esc(cls.rkey)}" name="quantity" type="number" min="1" max="${limit}" value="1" inputmode="numeric" style="max-width:6rem">
   <p><label style="font-weight:normal"><input type="checkbox" name="marketingConsent" value="1" style="width:auto"> The organizer may email me about future events.</label></p>
   <button type="submit">Reserve</button>
+</form>`;
+}
+
+function buyForm(event: Stored<Event>, cls: Stored<TicketClass>): string {
+  const limit = cls.record.perOrderLimit ?? 10;
+  const k = esc(cls.rkey);
+  const pwyw = cls.record.kind === "payWhatYouWant";
+  const floor = Math.max(cls.record.minimumPrice?.amountCents ?? 0, 50);
+  return `<form method="post" action="/e/${esc(event.did)}/${esc(event.rkey)}/checkout" class="noprint">
+  <input type="hidden" name="ticketClass" value="${k}">
+  <label for="name-${k}">Your name</label><input id="name-${k}" name="name" required autocomplete="name" maxlength="200">
+  <label for="email-${k}">Email (for your receipt and tickets)</label><input id="email-${k}" name="email" type="email" required autocomplete="email" maxlength="320">
+  <label for="qty-${k}">Tickets (up to ${limit})</label><input id="qty-${k}" name="quantity" type="number" min="1" max="${limit}" value="1" inputmode="numeric" style="max-width:6rem">
+  ${pwyw ? `<label for="amount-${k}">Price per ticket (minimum ${money(floor, cls.record.price.currency)})</label><input id="amount-${k}" name="amount" type="number" min="${(floor / 100).toFixed(2)}" step="0.01" value="${(cls.record.price.amountCents / 100).toFixed(2)}" inputmode="decimal" style="max-width:8rem">` : ""}
+  <p><label style="font-weight:normal"><input type="checkbox" name="marketingConsent" value="1" style="width:auto"> The organizer may email me about future events.</label></p>
+  <button type="submit">Buy tickets</button> <span class="fine">You pay on Stripe's secure page, charged by the organizer directly. Card details never pass through this site.</span>
 </form>`;
 }
 

@@ -1,5 +1,5 @@
-// HTTP routes. Public pages, open feeds and exports, the free RSVP flow, and a token-guarded write API.
-// Paid checkout is a stub until server/payments lands (docs/DEMO_PLAN.md build list).
+// HTTP routes. Public pages, open feeds and exports, the free RSVP flow, paid checkout on the organizer's own
+// Stripe account (payments.ts), the Stripe webhook, and a token-guarded write API.
 import { Hono, type Context } from "hono";
 import QRCode from "qrcode";
 import type { DatabaseSync } from "node:sqlite";
@@ -11,7 +11,9 @@ import { Services } from "./services.ts";
 import { icalCalendar } from "./ical.ts";
 import { eventPage, posterPage } from "./pages/event.ts";
 import { orgPage } from "./pages/org.ts";
-import { orderPage } from "./pages/order.ts";
+import { orderPage, pendingOrderPage } from "./pages/order.ts";
+import { PaymentError, Payments, type PaymentsConfig } from "./payments.ts";
+import { StripeError } from "./stripe.ts";
 import { reconciliationPage, doorCodePrompt } from "./pages/reconciliation.ts";
 import { attendanceCsv, reconcile, summaryCsv, type DoorScanRecord, type DonationRecord } from "./reconcile.ts";
 import { getCookie, setCookie } from "hono/cookie";
@@ -30,6 +32,7 @@ import type { Event, Organization, Order, Performance, Program, Ticket, TicketCl
 export interface AppConfig {
   baseUrl: string;
   adminToken?: string;
+  payments?: PaymentsConfig;
 }
 
 const PUBLIC_COLLECTIONS = new Set<string>([C.organization, C.act, C.event, C.performance, C.ticketClass, C.program]);
@@ -41,7 +44,8 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
   const auth = new Auth(db);
   const app = new Hono();
   const instanceKey = new InstanceKey(db);
-  const admin = mountAdmin(app, { store, keys, svc, auth, baseUrl: cfg.baseUrl, exportBundle: (did) => exportBundle(store, instanceKey, did, cfg.baseUrl) });
+  const payments = new Payments({ db, store, svc, baseUrl: cfg.baseUrl, config: cfg.payments ?? {} });
+  const admin = mountAdmin(app, { store, keys, svc, auth, payments, baseUrl: cfg.baseUrl, exportBundle: (did) => exportBundle(store, instanceKey, did, cfg.baseUrl) });
 
   app.get("/healthz", (c) => c.json({ ok: true, ns: NS }));
 
@@ -210,24 +214,72 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
       }, Number(form["quantity"] ?? 1));
       return c.redirect(`/order/${order.did}/${order.rkey}`, 303);
     } catch (e) {
-      if (e instanceof ValidationError) return c.html(renderEvent(event, `Could not reserve: ${e.message}`), 400);
+      if (e instanceof ValidationError) return c.html(renderEvent(event, `Could not reserve: ${e.message}`, true), 400);
       throw e;
     }
   });
-  app.post("/e/:did/:rkey/checkout", (c) => c.text("Paid checkout is not configured on this instance yet. Free reservations work.", 501));
+
+  // Paid checkout: hold the seats with a pending order, then send the buyer to Stripe's hosted page, charged
+  // directly on the organizer's connected account. Nothing card-related touches this server.
+  app.post("/e/:did/:rkey/checkout", async (c) => {
+    const event = store.get<Event>(c.req.param("did"), C.event, c.req.param("rkey"));
+    if (!event) return c.notFound();
+    const form = await c.req.parseBody();
+    const cls = store.get<TicketClass>(event.did, C.ticketClass, String(form["ticketClass"] ?? ""));
+    if (!cls) return c.text("unknown ticket class", 400);
+    if (!payments.canSell(event.did)) return c.html(renderEvent(event, "Online payment is not set up for this organizer yet. Free reservations still work.", true), 409);
+    try {
+      const offered = form["amount"] !== undefined && String(form["amount"]).trim() !== "" ? Math.round(Number(form["amount"]) * 100) : undefined;
+      const { url } = await payments.startCheckout(event, cls, {
+        name: String(form["name"] ?? ""), email: String(form["email"] ?? ""), marketingConsent: form["marketingConsent"] === "1",
+      }, Number(form["quantity"] ?? 1), offered);
+      return c.redirect(url, 303);
+    } catch (e) {
+      if (e instanceof ValidationError) return c.html(renderEvent(event, `Could not start checkout: ${e.message}`, true), 400);
+      if (e instanceof PaymentError) return c.html(renderEvent(event, e.message, true), 502);
+      throw e;
+    }
+  });
+
+  // Stripe webhook (Connect: events from connected accounts). Raw body is required for the signature check.
+  app.post("/webhooks/stripe", async (c) => {
+    try {
+      const result = await payments.handleWebhook(await c.req.text(), c.req.header("stripe-signature"));
+      return c.json({ received: true, ...result });
+    } catch (e) {
+      if (e instanceof StripeError) return c.json({ error: e.message }, e.status === 503 ? 503 : 400);
+      throw e;
+    }
+  });
 
   // Order page with QR tickets. The order rkey is the capability; keep it out of logs and referers.
+  // A pending paid order is settled here if Stripe says it is paid (covers a webhook that has not arrived).
   app.get("/order/:did/:rkey", async (c) => {
-    const order = store.get<Order>(c.req.param("did"), C.order, c.req.param("rkey"));
+    let order = store.get<Order>(c.req.param("did"), C.order, c.req.param("rkey"));
     if (!order) return c.notFound();
     const event = store.getByUri<Event>(order.record.event.uri);
     if (!event) return c.notFound();
-    const tickets = store.listReferencing<Ticket>(C.ticket, order.uri);
-    const withQr = await Promise.all(tickets.map(async (ticket) => ({ ticket, qrSvg: ticket.record.token ? await QRCode.toString(ticket.record.token, { type: "svg", errorCorrectionLevel: "M", margin: 1 }) : "" })));
     c.header("Referrer-Policy", "no-referrer");
     c.header("Cache-Control", "private, no-store");
+    if (order.record.status === "pending") {
+      const sessionId = c.req.query("session_id");
+      order = await payments.syncPending(order, ...(sessionId ? [sessionId] as const : []));
+      if (order.record.status === "pending") return c.html(pendingOrderPage(event, order));
+    }
+    if (order.record.status !== "paid" && order.record.status !== "free") return c.html(pendingOrderPage(event, order));
+    const tickets = store.listReferencing<Ticket>(C.ticket, order.uri);
+    const withQr = await Promise.all(tickets.map(async (ticket) => ({ ticket, qrSvg: ticket.record.token ? await QRCode.toString(ticket.record.token, { type: "svg", errorCorrectionLevel: "M", margin: 1 }) : "" })));
     return c.html(orderPage(event, order, withQr));
   });
+  // Stripe's cancel_url (a GET) and the pending page's cancel button both release the hold.
+  const cancelOrder = async (c: Context) => {
+    const order = store.get<Order>(c.req.param("did") ?? "", C.order, c.req.param("rkey") ?? "");
+    if (!order) return c.notFound();
+    await payments.cancelPending(order);
+    return c.redirect(`/e/${order.did}/${store.getByUri<Event>(order.record.event.uri)?.rkey ?? ""}?notice=${encodeURIComponent("Checkout cancelled. Nothing was charged and the seats were released.")}`, 303);
+  };
+  app.get("/order/:did/:rkey/cancelled", cancelOrder);
+  app.post("/order/:did/:rkey/cancel", cancelOrder);
 
   // Open data: every public record for a DID, in lexicon form. Anyone can index this.
   app.get("/export/:did/public.json", (c) => {
@@ -266,15 +318,15 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
     }
   });
 
-  function renderEvent(event: Stored<Event>, notice?: string): string {
+  function renderEvent(event: Stored<Event>, notice?: string, error = false): string {
     const org = firstOrg(store, event.did);
     const classes = svc.ticketClassesFor(event).map((cls) => ({ cls, remaining: svc.remaining(cls) }));
     const performances = store.listReferencing<Performance>(C.performance, event.uri).map((p) => ({ ...p, record: { ...p.record, actName: p.record.actName ?? (p.record.act ? store.getByUri<{ name: string }>(p.record.act.uri)?.record.name : undefined) } }));
     const program = store.listReferencing<Program>(C.program, event.uri)[0] ?? null;
-    return eventPage({ org, event, classes, performances, program, baseUrl: cfg.baseUrl, ...(notice ? { notice } : {}) });
+    return eventPage({ org, event, classes, performances, program, baseUrl: cfg.baseUrl, paymentsReady: payments.canSell(event.did), ...(notice ? { notice, error } : {}) });
   }
 
-  return { app, store, keys, svc, auth, instanceKey };
+  return { app, store, keys, svc, auth, instanceKey, payments };
 }
 
 function firstOrg(store: RecordStore, did: string): Stored<Organization> | null {

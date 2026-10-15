@@ -104,7 +104,21 @@ ${eventForm(eventFormValues(e, d.org), tz, adm, "Save details")}
 <style>.num{text-align:right} select{border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink)}</style>` });
 }
 
-export function orgPage(org: Stored<Organization>, error?: string, notice?: string): string {
+export interface PaymentsView { configured: boolean; oauth: boolean; livemode: boolean; webhooks: boolean; account: { accountId: string; livemode: boolean; connectedAt: string } | null }
+
+function paymentsSection(p: PaymentsView): string {
+  if (!p.configured) return `<p class="fine">This instance has no Stripe key, so online payment is off. Free reservations work. Whoever runs the instance sets <code>OMP_STRIPE_SECRET_KEY</code> (and <code>OMP_STRIPE_WEBHOOK_SECRET</code>) to turn it on; see docs/STRIPE_SETUP.md.</p>`;
+  const mode = p.livemode ? `<strong>live mode</strong>` : `test mode`;
+  if (p.account) {
+    return `<div class="card"><div class="row"><div><strong>Connected: <code>${esc(p.account.accountId)}</code></strong><div class="fine">${p.account.livemode ? "Live" : "Test"} account, connected ${esc(p.account.connectedAt.slice(0, 10))}. Buyers pay on Stripe's hosted page; the charge lands in this account, which is the merchant of record and handles refunds and chargebacks from its own Stripe dashboard. This site never holds the money.${p.webhooks ? "" : " Webhooks are not configured on this instance, so orders settle when the buyer returns to the order page."}</div></div>
+<form method="post" action="/admin/stripe/disconnect" style="margin:0"><button type="submit" class="secondary" onclick="return confirm('Disconnect Stripe? Paid ticket classes will stop selling until you reconnect.')">Disconnect</button></form></div></div>`;
+  }
+  return `<div class="card"><p>No payment account connected. The instance is in ${mode}. Paid ticket classes show as unavailable until you connect one.</p>
+${p.oauth ? `<p><a class="btn" href="/admin/stripe/connect">Connect with Stripe</a> <span class="fine">Opens Stripe; you sign in to your own account (or create one) and authorize this site to create charges on it.</span></p>` : ""}
+<form method="post" action="/admin/stripe/account"><label for="accountId">${p.oauth ? "Or paste a connected account id" : "Connected account id"}</label><input id="accountId" name="accountId" placeholder="acct_..." pattern="acct_[A-Za-z0-9]+" required autocomplete="off"><p class="fine">${p.livemode ? "Only accounts already connected to this platform work here." : "In test mode, create a test connected account in the Stripe dashboard (Connect → Accounts) and paste its id."}</p><p><button type="submit" class="secondary">Connect by id</button></p></form></div>`;
+}
+
+export function orgPage(org: Stored<Organization>, payments: PaymentsView, error?: string, notice?: string): string {
   const o = org.record;
   const l = o.location;
   return layout({ title: "Organization", body: `${nav(org)}
@@ -122,5 +136,7 @@ ${field("streetAddress", "Street address", l?.streetAddress ?? "")}
 <div class="row"><div>${field("locality", "City", l?.locality ?? "")}</div><div>${field("region", "State", l?.region ?? "")}</div><div>${field("postalCode", "ZIP", l?.postalCode ?? "")}</div><div>${field("capacity", "Capacity", l?.capacity?.toString() ?? "", "min=0", "number")}</div></div>
 ${area("accessibilityNotes", "Accessibility notes", l?.accessibilityNotes ?? "", 2)}
 <p><button type="submit">Save</button></p></form>
+<h2 id="payments">Online payments</h2>
+${paymentsSection(payments)}
 <p class="fine">Public page: <a href="/o/${esc(org.did)}">/o/${esc(org.did)}</a>. Ticket-signing key id: <code>${esc(o.issuerKeys?.[0]?.kid ?? "none")}</code>.</p>` });
 }

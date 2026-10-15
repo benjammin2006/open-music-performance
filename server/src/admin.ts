@@ -10,11 +10,13 @@ import { localToUtc, isValidTimeZone } from "./time.ts";
 import { dashboardPage, eventAdminPage, eventFormValues, newEventPage, orgPage, signInPage, type EventFormValues } from "./pages/admin.ts";
 import type { Event, Order, Organization, Program, Ticket, TicketClass } from "./types.ts";
 import type { ExportBundle } from "./portability.ts";
+import type { Payments } from "./payments.ts";
+import { randomToken } from "./auth.ts";
 
 const COOKIE = "omp_session";
 
-export function mountAdmin(app: Hono, deps: { store: RecordStore; keys: IssuerKeys; svc: Services; auth: Auth; baseUrl: string; exportBundle: (did: string) => Promise<ExportBundle> }) {
-  const { store, keys, svc, auth, baseUrl } = deps;
+export function mountAdmin(app: Hono, deps: { store: RecordStore; keys: IssuerKeys; svc: Services; auth: Auth; payments: Payments; baseUrl: string; exportBundle: (did: string) => Promise<ExportBundle> }) {
+  const { store, keys, svc, auth, payments, baseUrl } = deps;
   const secure = baseUrl.startsWith("https");
   const firstOrg = (did: string) => store.list<Organization>(did, C.organization, 1)[0] ?? null;
   const str = (b: Record<string, unknown>, k: string, max = 2000) => String(b[k] ?? "").trim().slice(0, max);
@@ -60,25 +62,68 @@ export function mountAdmin(app: Hono, deps: { store: RecordStore; keys: IssuerKe
     return c.body(JSON.stringify(bundle, null, 2), 200, { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="omp-export-${slug}-${bundle.exportedAt.slice(0, 10)}.json"`, "Cache-Control": "private, no-store" });
   });
 
+  const paymentsView = (did: string) => ({ configured: payments.configured, oauth: Boolean(payments.stripe?.hasOAuth), livemode: Boolean(payments.stripe?.livemode), webhooks: payments.webhooksConfigured, account: payments.accounts.get(did) });
+  const renderOrg = (c: Context, org: Stored<Organization>, extra: { error?: string; notice?: string } = {}, status = 200) => c.html(orgPage(org, paymentsView(org.did), extra.error, extra.notice), status as 200);
   app.get("/admin/org", (c) => {
     const org = firstOrg(didOf(c));
-    return org ? c.html(orgPage(org, undefined, c.req.query("notice"))) : c.text("no organization record", 404);
+    const notice = c.req.query("notice");
+    return org ? renderOrg(c, org, notice ? { notice } : {}) : c.text("no organization record", 404);
   });
   app.post("/admin/org", async (c) => {
     const org = firstOrg(didOf(c));
     if (!org) return c.text("no organization record", 404);
     const b = await c.req.parseBody();
     const tz = str(b, "timezone", 64);
-    if (!isValidTimeZone(tz)) return c.html(orgPage(org, `Unknown timezone "${tz}". Use an IANA name such as America/Chicago.`), 400);
+    if (!isValidTimeZone(tz)) return renderOrg(c, org, { error: `Unknown timezone "${tz}". Use an IANA name such as America/Chicago.` }, 400);
     const location = locationFrom(b, str);
     const record = { ...org.record, name: str(b, "name", 200), kind: str(b, "kind", 40), description: str(b, "description", 30000) || undefined, website: str(b, "website", 500) || undefined, timezone: tz, ...(location ? { location } : {}) };
     try {
       await store.put(org.did, C.organization, stripUndefined(record), org.rkey);
     } catch (e) {
-      if (e instanceof ValidationError) return c.html(orgPage(org, e.message), 400);
+      if (e instanceof ValidationError) return renderOrg(c, org, { error: e.message }, 400);
       throw e;
     }
     return c.redirect("/admin/org?notice=Saved.", 303);
+  });
+
+  // Payments: connect the organization's own Stripe account (Connect Standard OAuth, or paste a test account id).
+  const orgNotice = (c: Context, msg: string) => c.redirect(`/admin/org?notice=${encodeURIComponent(msg)}`, 303);
+  const STATE_COOKIE = "omp_stripe_state";
+  app.get("/admin/stripe/connect", (c) => {
+    if (!payments.stripe?.hasOAuth) return orgNotice(c, "Stripe Connect OAuth is not configured on this instance (OMP_STRIPE_CLIENT_ID).");
+    const state = randomToken();
+    setCookie(c, STATE_COOKIE, state, { httpOnly: true, sameSite: "Lax", path: "/admin/stripe", secure, maxAge: 600 });
+    return c.redirect(payments.stripe.authorizeUrl(`${baseUrl}/admin/stripe/callback`, state), 303);
+  });
+  app.get("/admin/stripe/callback", async (c) => {
+    const stripe = payments.stripe;
+    const state = getCookie(c, STATE_COOKIE);
+    deleteCookie(c, STATE_COOKIE, { path: "/admin/stripe" });
+    if (!stripe || !state || state !== c.req.query("state")) return orgNotice(c, "Stripe connection was not completed (state mismatch). Try again.");
+    if (c.req.query("error")) return orgNotice(c, `Stripe connection declined: ${c.req.query("error_description") ?? c.req.query("error")}`);
+    const code = c.req.query("code") ?? "";
+    try {
+      const r = await stripe.exchangeOAuthCode(code);
+      payments.accounts.set(didOf(c), r.accountId, r.livemode);
+      return orgNotice(c, `Connected Stripe account ${r.accountId}${r.livemode ? "" : " (test mode)"}.`);
+    } catch (e) {
+      return orgNotice(c, `Stripe connection failed: ${(e as Error).message}`);
+    }
+  });
+  app.post("/admin/stripe/account", async (c) => {
+    const org = firstOrg(didOf(c));
+    if (!org) return c.text("no organization record", 404);
+    if (!payments.stripe) return renderOrg(c, org, { error: "This instance has no Stripe secret key, so accounts cannot be connected." }, 400);
+    const id = str(await c.req.parseBody(), "accountId", 64);
+    if (!/^acct_[A-Za-z0-9]{8,}$/.test(id)) return renderOrg(c, org, { error: "That does not look like a Stripe account id (acct_...)." }, 400);
+    payments.accounts.set(org.did, id, payments.stripe.livemode);
+    return orgNotice(c, `Connected Stripe account ${id}. Publish an event with a paid class to test it.`);
+  });
+  app.post("/admin/stripe/disconnect", async (c) => {
+    const did = didOf(c);
+    const acct = payments.accounts.get(did);
+    if (acct) { try { await payments.stripe?.deauthorize(acct.accountId); } catch { /* best effort */ } payments.accounts.remove(did); }
+    return orgNotice(c, "Stripe account disconnected. Paid classes now show as unavailable.");
   });
 
   app.get("/admin/events/new", (c) => {

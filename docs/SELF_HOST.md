@@ -6,7 +6,7 @@ One container for the app, one for HTTPS, one data volume. A school district, a 
 
 - A Linux host with Docker and Docker Compose (a small VPS is plenty; a 300-seat sellout is 300 orders).
 - A domain name pointing at the host, so Caddy can obtain a certificate automatically.
-- Each organizer brings their own Stripe account when paid tickets arrive; the instance never holds money.
+- For paid tickets, a Stripe account for the instance (its keys go in `.env`) and one for each organizer, who connects it from their admin page. Charges land in the organizer's account; the instance never holds money. Setup in [STRIPE_SETUP.md](STRIPE_SETUP.md).
 
 ## Install
 
@@ -15,6 +15,7 @@ git clone https://github.com/benjammin2006/open-music-performance.git
 cd open-music-performance
 cp .env.example .env
 # edit .env: OMP_DOMAIN, OMP_BASE_URL (https://your-domain), OMP_ADMIN_TOKEN (openssl rand -hex 24)
+#           optional: OMP_STRIPE_SECRET_KEY, OMP_STRIPE_WEBHOOK_SECRET, OMP_STRIPE_CLIENT_ID (docs/STRIPE_SETUP.md)
 docker compose up -d
 ```
 
@@ -26,6 +27,7 @@ Then open `https://your-domain/setup`. The first visit to an empty instance crea
 |---|---|
 | Database (SQLite, one file) | the `omp-data` volume, `/data/omp.sqlite` in the container |
 | TLS certificates | the `caddy-data` volume |
+| Connected Stripe account ids | in the database (`payment_accounts`), never in exports |
 | Organizer keys, door codes, signing keys | in the database, hashed where they are secrets; the issuer private key is stored unencrypted (encrypt at rest before you depend on this for anything beyond a pilot, see `server/src/db.ts`) |
 | Logs | `docker compose logs -f omp` |
 
@@ -52,6 +54,7 @@ Node 24 is the only runtime dependency:
 ```bash
 npm ci && npm run build
 OMP_BASE_URL=https://your-domain OMP_ADMIN_TOKEN=... OMP_DB_PATH=/var/lib/omp/omp.sqlite node server/src/main.ts
+# add OMP_STRIPE_SECRET_KEY and OMP_STRIPE_WEBHOOK_SECRET for paid tickets; the webhook endpoint is /webhooks/stripe
 ```
 
 Put any TLS-terminating reverse proxy in front of port 3000.

@@ -5,9 +5,9 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/main.ts",
-    "start": "node src/main.ts",
-    "seed": "node src/seed-cli.ts",
+    "dev": "node --env-file-if-exists=.env --watch src/main.ts",
+    "start": "node --env-file-if-exists=.env src/main.ts",
+    "seed": "node --env-file-if-exists=.env src/seed-cli.ts",
     "test": "node --test \"test/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

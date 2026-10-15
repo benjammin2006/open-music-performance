@@ -148,10 +148,14 @@ test("write API requires the admin token and validates against the lexicon", asy
   assert.equal(priv.status, 403);
 });
 
-test("paid checkout is an honest 501 until payments land", async () => {
+test("paid checkout on an instance without Stripe explains itself instead of charging", async () => {
   const { app } = await fresh();
-  const res = await app.request(`${EVENT_PATH}/checkout`, { method: "POST", body: new URLSearchParams({ ticketClass: "3lhtcpaid00001" }) });
-  assert.equal(res.status, 501);
+  const page = await (await app.request(EVENT_PATH)).text();
+  assert.match(page, /Online purchase is not open yet/);
+  assert.doesNotMatch(page, /action="[^"]*\/checkout"/);
+  const res = await app.request(`${EVENT_PATH}/checkout`, { method: "POST", body: new URLSearchParams({ ticketClass: "3lhtcpaid00001", name: "A", email: "a@b.co" }) });
+  assert.equal(res.status, 409);
+  assert.match(await res.text(), /not set up for this organizer/);
 });
 
 test("door pack requires the door code and carries keys, status list and the door list", async () => {

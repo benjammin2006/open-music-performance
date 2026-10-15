@@ -53,6 +53,16 @@ function migrate(db: DatabaseSync): void {
       PRIMARY KEY (event_uri, code)
     );
 
+    -- Which Stripe account each organization charges on (Connect Standard). Private; never exported.
+    CREATE TABLE IF NOT EXISTS payment_accounts (
+      did          TEXT NOT NULL,
+      provider     TEXT NOT NULL,
+      account_id   TEXT NOT NULL,
+      livemode     INTEGER NOT NULL,
+      connected_at TEXT NOT NULL,
+      PRIMARY KEY (did, provider)
+    );
+
     -- Per-event ticket serial counter; serial is the bit index in the event's status list.
     CREATE TABLE IF NOT EXISTS serials (
       event_uri TEXT PRIMARY KEY,

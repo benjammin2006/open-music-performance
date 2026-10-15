@@ -6,6 +6,9 @@ import { ValidationError, strongRef, type RecordStore, type Stored } from "./rec
 import { nextTid } from "./tid.ts";
 import type { Event, Order, Ticket, TicketClass } from "./types.ts";
 
+/** How long a pending paid order holds its seats. Stripe Checkout's minimum session expiry is 30 minutes. */
+export const HOLD_SECONDS = 30 * 60;
+
 export class Services {
   private store: RecordStore;
   private keys: IssuerKeys;
@@ -22,19 +25,35 @@ export class Services {
     return this.store.listReferencing<Ticket>(C.ticket, ticketClass.uri).filter((t) => t.record.status === "valid").length;
   }
 
+  /** Seats held by pending paid orders that are still inside the hold window. */
+  heldCount(ticketClass: Stored<TicketClass>, now = Date.now()): number {
+    const cutoff = now - (HOLD_SECONDS + 120) * 1000;
+    return this.store.listReferencing<Order>(C.order, ticketClass.uri, 100_000)
+      .filter((o) => o.record.status === "pending" && Date.parse(o.record.createdAt) >= cutoff)
+      .reduce((n, o) => n + o.record.items.filter((i) => i.ticketClass.uri === ticketClass.uri).reduce((m, i) => m + i.quantity, 0), 0);
+  }
+
   remaining(ticketClass: Stored<TicketClass>): number | null {
     const cap = ticketClass.record.capacity;
-    return cap === undefined ? null : Math.max(0, cap - this.issuedCount(ticketClass));
+    return cap === undefined ? null : Math.max(0, cap - this.issuedCount(ticketClass) - this.heldCount(ticketClass));
+  }
+
+  /** The checks every order path shares: event open, sales window, per-order limit, capacity net of holds. */
+  checkOrderable(event: Stored<Event>, ticketClass: Stored<TicketClass>, quantity: number, now = new Date()): void {
+    if (event.record.status !== "published") throw new ValidationError("event is not open");
+    const r = ticketClass.record;
+    if (r.salesStartAt && now.toISOString() < r.salesStartAt) throw new ValidationError("sales have not opened yet");
+    if (r.salesEndAt && now.toISOString() > r.salesEndAt) throw new ValidationError("sales have closed");
+    const limit = r.perOrderLimit ?? 10;
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > limit) throw new ValidationError(`quantity must be between 1 and ${limit}`);
+    const left = this.remaining(ticketClass);
+    if (left !== null && quantity > left) throw new ValidationError(left === 0 ? "sold out" : `only ${left} left`);
   }
 
   /** Free RSVP: creates a free order and issues signed tickets. Paid classes are refused here. */
   async rsvp(event: Stored<Event>, ticketClass: Stored<TicketClass>, buyer: { name: string; email?: string; marketingConsent?: boolean }, quantity: number): Promise<{ order: Stored<Order>; tickets: Stored<Ticket>[] }> {
     if (ticketClass.record.kind !== "freeRsvp" && ticketClass.record.kind !== "comp") throw new ValidationError("this ticket class is not free");
-    if (event.record.status !== "published") throw new ValidationError("event is not open");
-    const limit = ticketClass.record.perOrderLimit ?? 10;
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > limit) throw new ValidationError(`quantity must be between 1 and ${limit}`);
-    const left = this.remaining(ticketClass);
-    if (left !== null && quantity > left) throw new ValidationError(left === 0 ? "sold out" : `only ${left} left`);
+    this.checkOrderable(event, ticketClass, quantity);
     if (!buyer.name.trim()) throw new ValidationError("name is required");
 
     const now = new Date().toISOString();

@@ -29,7 +29,8 @@ export async function seedDemo(store: RecordStore, keys: IssuerKeys, auth?: Auth
   const event = await put(C.event, fx("event"), DEMO_EVENT_RKEY);
   const ev = strongRef(event);
 
-  const paidFx = fx("ticketClass");
+  // The fixture's sales window opens in November; the demo sells today, so the seed drops the start date.
+  const { salesStartAt: _opensLater, ...paidFx } = fx("ticketClass");
   const paid = await put(C.ticketClass, { ...paidFx, event: ev }, "3lhtcpaid00001");
   const free = await put(C.ticketClass, {
     event: ev, name: "Free reservation", kind: "freeRsvp", price: { amountCents: 0, currency: "USD" },
