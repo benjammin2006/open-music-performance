@@ -13,6 +13,9 @@ import { eventPage, posterPage } from "./pages/event.ts";
 import { orgPage } from "./pages/org.ts";
 import { orderPage } from "./pages/order.ts";
 import { esc, layout } from "./render.ts";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { join, normalize } from "node:path";
 import type { Event, Organization, Order, Performance, Program, Ticket, TicketClass } from "./types.ts";
 
 export interface AppConfig {
@@ -73,6 +76,42 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
     const org = firstOrg(store, c.req.param("did"));
     if (!org) return c.notFound();
     return c.json({ did: org.did, issuerKeys: org.record.issuerKeys ?? [] });
+  });
+
+  // Door endpoints, guarded by the per-event door code. One sync gives the scanner everything it needs offline.
+  const doorAuth = (c: { req: { header: (n: string) => string | undefined } }, eventUri: string) =>
+    keys.checkDoorCode(eventUri, (c.req.header("authorization") ?? "").replace(/^Bearer\s+/i, ""));
+  app.get("/e/:did/:rkey/door.json", async (c) => {
+    const event = store.get<Event>(c.req.param("did"), C.event, c.req.param("rkey"));
+    if (!event) return c.notFound();
+    if (!doorAuth(c, event.uri)) return c.text("door code required", 401);
+    c.header("Cache-Control", "private, no-store");
+    return c.json(await svc.doorPack(event, firstOrg(store, event.did)));
+  });
+  app.post("/e/:did/:rkey/scans", async (c) => {
+    const event = store.get<Event>(c.req.param("did"), C.event, c.req.param("rkey"));
+    if (!event) return c.notFound();
+    if (!doorAuth(c, event.uri)) return c.text("door code required", 401);
+    const body = (await c.req.json().catch(() => null)) as { scans?: unknown[] } | null;
+    if (!body || !Array.isArray(body.scans)) return c.text("expected { scans: [] }", 400);
+    return c.json({ accepted: await svc.recordScans(event, body.scans.slice(0, 5000)) });
+  });
+
+  // Scanner PWA, served from apps/scanner/dist (run `npm run build` first).
+  const scannerDir = fileURLToPath(new URL("../../apps/scanner/dist/", import.meta.url));
+  const types: Record<string, string> = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".map": "application/json", ".webmanifest": "application/manifest+json", ".svg": "image/svg+xml", ".css": "text/css" };
+  app.get("/scan", (c) => c.redirect("/scan/"));
+  app.get("/scan/*", async (c) => {
+    const rel = normalize(c.req.path.replace(/^\/scan\//, "") || "index.html");
+    if (rel.startsWith("..")) return c.notFound();
+    const file = join(scannerDir, rel === "" || rel === "." ? "index.html" : rel);
+    try {
+      const body = await readFile(file);
+      const ext = file.slice(file.lastIndexOf("."));
+      return c.body(body, 200, { "Content-Type": types[ext] ?? "application/octet-stream", "Cache-Control": rel.endsWith("sw.js") ? "no-cache" : "public, max-age=300" });
+    } catch {
+      return c.text("scanner not built; run npm run build", 404);
+    }
   });
 
   // Free RSVP: issues signed tickets. Paid checkout is a stub until the payments lane.

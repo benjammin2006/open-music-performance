@@ -28,6 +28,16 @@ export class IssuerKeys {
     return key.publicKeyMultibase;
   }
 
+  setDoorCode(eventUri: string, code: string): void {
+    this.db.prepare("INSERT OR IGNORE INTO door_codes (event_uri, code, created_at) VALUES (?, ?, ?)").run(eventUri, code, new Date().toISOString());
+  }
+
+  checkDoorCode(eventUri: string, code: string): boolean {
+    if (!code) return false;
+    const row = this.db.prepare("SELECT 1 FROM door_codes WHERE event_uri = ? AND code = ?").get(eventUri, code);
+    return Boolean(row);
+  }
+
   async privateKey(did: string, kid: string): Promise<CryptoKey | null> {
     const row = this.db.prepare("SELECT jwk FROM issuer_keys WHERE did = ? AND kid = ?").get(did, kid) as { jwk: string } | undefined;
     return row ? importPrivateKeyJwk(JSON.parse(row.jwk)) : null;

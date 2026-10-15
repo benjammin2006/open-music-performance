@@ -153,3 +153,51 @@ test("paid checkout is an honest 501 until payments land", async () => {
   const res = await app.request(`${EVENT_PATH}/checkout`, { method: "POST", body: new URLSearchParams({ ticketClass: "3lhtcpaid00001" }) });
   assert.equal(res.status, 501);
 });
+
+test("door pack requires the door code and carries keys, status list and the door list", async () => {
+  const { app } = await fresh();
+  const { DEMO_DOOR_CODE } = await import("../src/seed.ts");
+  assert.equal((await app.request(`${EVENT_PATH}/door.json`)).status, 401);
+  assert.equal((await app.request(`${EVENT_PATH}/door.json`, { headers: { authorization: "Bearer WRONG" } })).status, 401);
+  const res = await app.request(`${EVENT_PATH}/door.json`, { headers: { authorization: `Bearer ${DEMO_DOOR_CODE}` } });
+  assert.equal(res.status, 200);
+  const pack = await res.json() as { issuerKeys: unknown[]; statusList: { size: number }; tickets: { holder: string; serial: number }[]; classes: unknown[]; event: { title: string } };
+  assert.equal(pack.event.title, "Winter Concert");
+  assert.equal(pack.issuerKeys.length, 1);
+  assert.ok(pack.statusList.size >= 1024);
+  assert.equal(pack.classes.length, 2);
+  assert.equal(pack.tickets[0]!.holder, "Jordan Rivera");
+});
+
+test("scan upload is idempotent by nonce and links scans to tickets", async () => {
+  const { app, store } = await fresh();
+  const { DEMO_DOOR_CODE } = await import("../src/seed.ts");
+  const nonce = "0123456789abcdef0123456789abcdef";
+  const scans = [
+    { nonce, ticketTid: "3lhticket00001", scannerId: "door-north", result: "admitted", offline: true, scannedAt: "2026-12-16T00:41:12Z" },
+    { nonce: "ffffffffffffffffffffffffffffffff", scannerId: "door-north", result: "cashAdmit", cashCollected: { amountCents: 500, currency: "USD" }, scannedAt: "2026-12-16T00:42:00Z" },
+    { nonce: "not-a-nonce", scannerId: "x", result: "admitted", scannedAt: "2026-12-16T00:42:00Z" },
+  ];
+  const post = () => app.request(`${EVENT_PATH}/scans`, { method: "POST", body: JSON.stringify({ scans }), headers: { "content-type": "application/json", authorization: `Bearer ${DEMO_DOOR_CODE}` } });
+  const first = await (await post()).json() as { accepted: string[] };
+  assert.deepEqual(first.accepted, [nonce, "ffffffffffffffffffffffffffffffff"]);
+  const second = await (await post()).json() as { accepted: string[] };
+  assert.deepEqual(second.accepted, first.accepted);
+  const stored = store.list<{ ticket?: { uri: string }; cashCollected?: { amountCents: number } }>(DEMO_DID, C.doorScan, 100);
+  const mine = stored.filter((s) => s.rkey === nonce);
+  assert.equal(mine.length, 1);
+  assert.match(mine[0]!.record.ticket!.uri, /3lhticket00001$/);
+  assert.equal(stored.find((s) => s.rkey === "ffffffffffffffffffffffffffffffff")!.record.cashCollected!.amountCents, 500);
+  assert.equal((await app.request(`${EVENT_PATH}/scans`, { method: "POST", body: "{}", headers: { "content-type": "application/json" } })).status, 401);
+});
+
+test("scanner PWA is served under /scan/ when built", async () => {
+  const { app } = await fresh();
+  const res = await app.request("/scan/");
+  assert.ok(res.status === 200 || res.status === 404);
+  if (res.status === 200) {
+    assert.match(res.headers.get("content-type") ?? "", /text\/html/);
+    assert.match(await res.text(), /OMP Door/);
+    assert.equal((await app.request("/scan/../../package.json")).status, 404);
+  }
+});

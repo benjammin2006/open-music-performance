@@ -12,12 +12,12 @@
   "scripts": {
     "schema:check": "npm run check -w @omp/schemas",
     "schema:docs": "npm run docs -w @omp/schemas",
-    "test": "npm run build && npm run schema:check && npm run test -w @omp/tickets && npm run test -w @omp/server",
+    "test": "npm run build && npm run schema:check && npm run test -w @omp/tickets && npm run test -w @omp/scanner && npm run test -w @omp/server",
     "prepare": "git config core.hooksPath .githooks || true",
-    "typecheck": "npm run typecheck -w @omp/tickets && npm run typecheck -w @omp/server",
-    "build": "npm run build -w @omp/tickets",
-    "dev": "OMP_ROOT=$PWD npm run dev -w @omp/server",
-    "seed": "OMP_ROOT=$PWD npm run seed -w @omp/server"
+    "typecheck": "npm run typecheck -w @omp/tickets && npm run typecheck -w @omp/scanner && npm run typecheck -w @omp/server",
+    "build": "npm run build -w @omp/tickets && npm run build -w @omp/scanner",
+    "dev": "npm run dev -w @omp/server",
+    "seed": "npm run seed -w @omp/server"
   },
   "engines": {
     "node": ">=20"

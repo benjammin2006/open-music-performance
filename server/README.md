@@ -10,6 +10,7 @@ What it does today:
 - **Open feeds and data**: `/o/:did/calendar.ics`, `/e/:did/:rkey.ics`, `/export/:did/public.json` (every public record, in lexicon form, for anyone to index), `/e/:did/:rkey/status-list.json` and `/o/:did/issuer-keys.json` for scanners to pre-sync.
 - **Free RSVP**: `POST /e/:did/:rkey/rsvp` creates a free order and issues signed tickets (`@omp/tickets`), enforcing per-order limit, capacity and the free-only rule.
 - **Write API**: `POST /api/:did/:collection`, bearer-token guarded until organizer accounts exist, lexicon-validated.
+- **Door endpoints**, guarded by a per-event door code: `GET /e/:did/:rkey/door.json` (the scanner's one-time sync pack) and `POST /e/:did/:rkey/scans` (idempotent scan-log upload, nonce as record key). The scanner PWA is served at `/scan/` from `apps/scanner/dist`.
 - **Paid checkout**: `POST /e/:did/:rkey/checkout` returns 501 until the payments lane lands.
 
 Run it:
@@ -22,4 +23,4 @@ npm run dev                          # http://localhost:3000
 
 Tests: `npm run test -w @omp/server` (node:test, in-memory SQLite, no network).
 
-Not yet: organizer accounts and passkeys, email delivery of tickets, Stripe checkout, the scanner PWA, cash and door reconciliation, donations UI, Eventbrite import, ActivityPub, AT Protocol publishing.
+Not yet: organizer accounts and passkeys, email delivery of tickets, Stripe checkout, the reconciliation sheet, donations UI, Eventbrite import, ActivityPub, AT Protocol publishing.

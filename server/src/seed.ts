@@ -9,6 +9,7 @@ import { strongRef, type RecordStore } from "./records.ts";
 
 export const DEMO_DID = "did:web:lincolnbands.example";
 export const DEMO_EVENT_RKEY = "3lhevent000001";
+export const DEMO_DOOR_CODE = "LINCOLN-DOOR";
 
 export async function seedDemo(store: RecordStore, keys: IssuerKeys): Promise<{ did: string; eventRkey: string }> {
   const fx = (name: string) => JSON.parse(readFileSync(join(fixturesDir(), `${name}.json`), "utf8")) as Record<string, unknown>;
@@ -48,6 +49,7 @@ export async function seedDemo(store: RecordStore, keys: IssuerKeys): Promise<{ 
   const ticket = await put(C.ticket, { ...ticketRest, event: ev, ticketClass: strongRef(paid), order: strongRef(order), serial: store.nextSerial(event.uri) }, "3lhticket00001");
   await put(C.doorScan, { ...fx("doorScan"), event: ev, ticket: strongRef(ticket) }, "3lhscan0000001");
   await put(C.donation, { ...fx("donation"), event: ev }, "3lhdon00000001");
+  keys.setDoorCode(event.uri, DEMO_DOOR_CODE);
 
   return { did, eventRkey: event.rkey };
 }

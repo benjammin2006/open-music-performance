@@ -75,6 +75,44 @@ export class Services {
     return out;
   }
 
+  /** Everything a scanner needs for one event, fetched once while online. Private: requires the door code. */
+  async doorPack(event: Stored<Event>, org: Stored<{ issuerKeys?: { kid: string; publicKeyMultibase: string }[] }> | null) {
+    const classes = this.ticketClassesFor(event);
+    const classByUri = new Map(classes.map((c) => [c.uri, c]));
+    const tickets = this.store.listReferencing<Ticket>(C.ticket, event.uri, 100_000);
+    const l = event.record.location;
+    return {
+      event: { did: event.did, rkey: event.rkey, uri: event.uri, title: event.record.title, startsAt: event.record.startsAt, timezone: event.record.timezone, location: [l.name, l.locality].filter(Boolean).join(", ") },
+      issuerKeys: (org?.record.issuerKeys ?? []).map((k) => ({ kid: k.kid, publicKeyMultibase: k.publicKeyMultibase })),
+      statusList: await this.statusList(event),
+      classes: classes.map((c) => ({ rkey: c.rkey, name: c.record.name, kind: c.record.kind })),
+      tickets: tickets.map((t) => ({ tid: t.rkey, serial: t.record.serial, holder: t.record.holderLabel ?? "", classRkey: classByUri.get(t.record.ticketClass.uri)?.rkey ?? "", status: t.record.status })),
+      syncedAt: new Date().toISOString(),
+    };
+  }
+
+  /** Record uploaded door scans. The nonce is the record key, so re-uploads are idempotent. Returns accepted nonces. */
+  async recordScans(event: Stored<Event>, scans: unknown[]): Promise<string[]> {
+    const accepted: string[] = [];
+    for (const raw of scans) {
+      const s = raw as { nonce?: string; ticketTid?: string; scannerId?: string; result?: string; offline?: boolean; cashCollected?: { amountCents: number; currency: string }; note?: string; scannedAt?: string };
+      if (!s.nonce || !/^[a-f0-9]{32}$/.test(s.nonce)) continue;
+      const ticket = s.ticketTid ? this.store.get<Ticket>(event.did, C.ticket, s.ticketTid) : null;
+      try {
+        await this.store.put(event.did, C.doorScan, {
+          event: strongRef(event), ...(ticket ? { ticket: strongRef(ticket) } : {}),
+          scannerId: String(s.scannerId ?? "unknown").slice(0, 128), nonce: s.nonce, result: String(s.result ?? "denied"),
+          ...(s.cashCollected ? { cashCollected: s.cashCollected } : {}), ...(s.offline !== undefined ? { offline: Boolean(s.offline) } : {}),
+          ...(s.note ? { note: String(s.note).slice(0, 3000) } : {}), scannedAt: s.scannedAt ?? new Date().toISOString(),
+        }, s.nonce);
+        accepted.push(s.nonce);
+      } catch (e) {
+        if (!(e instanceof ValidationError)) throw e;
+      }
+    }
+    return accepted;
+  }
+
   /** Status list for an event: bit set for every revoked or refunded serial. Scanners fetch this before doors. */
   async statusList(event: Stored<Event>): Promise<{ size: number; encodedList: string }> {
     const tickets = this.store.listReferencing<Ticket>(C.ticket, event.uri, 100_000);

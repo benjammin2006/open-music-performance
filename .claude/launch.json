@@ -4,9 +4,19 @@
     {
       "name": "omp-server",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start", "-w", "@omp/server"],
+      "runtimeArgs": [
+        "run",
+        "start",
+        "-w",
+        "@omp/server"
+      ],
       "port": 3000,
-      "env": { "OMP_PORT": "3000", "OMP_BASE_URL": "http://localhost:3000", "OMP_DB_PATH": "./server/data/omp.sqlite", "OMP_ADMIN_TOKEN": "dev-only-token" }
+      "env": {
+        "OMP_PORT": "3000",
+        "OMP_BASE_URL": "http://localhost:3000",
+        "OMP_DB_PATH": "data/omp.sqlite",
+        "OMP_ADMIN_TOKEN": "dev-only-token"
+      }
     }
   ]
 }

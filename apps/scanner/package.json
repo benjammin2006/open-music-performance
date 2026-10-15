@@ -1,0 +1,19 @@
+{
+  "name": "@omp/scanner",
+  "version": "0.1.0",
+  "description": "Door scanner PWA: offline verification of signed OMP tickets, duplicate detection, manual name-list check-in, cash and comp logging, idempotent scan upload.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@omp/tickets": "0.1.0",
+    "jsqr": "^1.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

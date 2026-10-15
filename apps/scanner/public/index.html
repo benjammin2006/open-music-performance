@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121317">
+<title>OMP Door</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<style>
+  :root { --ink:#e8e8ec; --muted:#a3a6ad; --line:#2e3036; --bg:#121317; --accent:#7ea2ff; --accent-ink:#0b1430; --ok:#1d7a4a; --warn:#b7791f; --bad:#b42318; }
+  * { box-sizing:border-box; } html, body { margin:0; height:100%; }
+  body { font:17px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:var(--bg); -webkit-user-select:none; user-select:none; }
+  header { display:flex; justify-content:space-between; align-items:center; gap:.5rem; padding:.6rem .8rem; border-bottom:1px solid var(--line); font-size:.9rem; color:var(--muted); }
+  header b { color:var(--ink); } #net { text-transform:uppercase; font-size:.75rem; letter-spacing:.05em; }
+  main { padding:.8rem; max-width:40rem; margin:0 auto; }
+  label { display:block; margin:.7rem 0 .2rem; font-weight:600; }
+  input { font:inherit; width:100%; padding:.65rem .7rem; border:1px solid var(--line); border-radius:8px; background:#1b1c21; color:var(--ink); }
+  button { font:inherit; font-weight:600; background:var(--accent); color:var(--accent-ink); border:0; border-radius:10px; padding:.75rem 1rem; cursor:pointer; }
+  button.secondary { background:#2a2c33; color:var(--ink); } button.quiet { background:transparent; color:var(--muted); padding:.4rem .5rem; }
+  .row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin:.6rem 0; } .row > * { flex:1 1 auto; }
+  #video { width:100%; max-height:42vh; object-fit:cover; background:#000; border-radius:12px; }
+  .result { margin:.7rem 0; padding:1rem; border-radius:14px; text-align:center; min-height:6.5rem; background:#1b1c21; transition: background .15s; }
+  .result.ok { background:var(--ok); } .result.warn { background:var(--warn); color:#1a1200; } .result.bad { background:var(--bad); }
+  .result .headline { font-size:2rem; font-weight:800; line-height:1.1; } .result .who { font-size:1.1rem; margin-top:.25rem; } .result .detail { opacity:.9; margin-top:.25rem; font-size:.95rem; }
+  #counts { display:flex; gap:.6rem; flex-wrap:wrap; font-size:.9rem; color:var(--muted); } #counts b { color:var(--ink); } #counts .pending b { color:#ffd166; }
+  .bad { color:#ff8a80; } #setup-status { min-height:1.4rem; margin:.5rem 0; }
+  table { width:100%; border-collapse:collapse; } td, th { text-align:left; padding:.5rem .3rem; border-bottom:1px solid var(--line); } th { color:var(--muted); font-size:.85rem; }
+  tr.done td { color:var(--muted); } tr.void td { color:var(--muted); text-decoration: line-through; }
+  td button { padding:.4rem .7rem; }
+  .fine { color:var(--muted); font-size:.85rem; }
+  @media print { body { background:#fff; color:#000; } header, .noprint, button, input { display:none !important; } td, th { border-color:#999; color:#000 !important; } tr.done td { text-decoration: line-through; } }
+</style>
+</head>
+<body>
+<header><span><b>OMP Door</b> <span id="event-title" class="fine"></span></span><span id="net"></span></header>
+<main>
+  <section id="setup" hidden>
+    <h2 style="margin:.2rem 0">Set up this door</h2>
+    <p class="fine">Sync once while you have signal. After that the door works with no connection.</p>
+    <label for="server">Server</label><input id="server" inputmode="url" autocomplete="off">
+    <label for="event">Event page link</label><input id="event" inputmode="url" autocomplete="off" placeholder="https://…/e/did:…/3lh…">
+    <label for="door-code">Door code</label><input id="door-code" autocomplete="off" autocapitalize="characters">
+    <div id="setup-status" aria-live="polite"></div>
+    <div class="row"><button id="sync">Sync and start</button><button id="forget" class="quiet">Forget this device's event</button></div>
+  </section>
+
+  <section id="scan" hidden>
+    <video id="video" muted playsinline></video>
+    <div class="fine" id="camera-status" aria-live="polite"></div>
+    <div id="result" class="result" aria-live="assertive"><div class="headline">Ready</div><div class="detail">Point the camera at a ticket.</div></div>
+    <div id="counts"></div>
+    <form id="manual-form" class="row noprint"><input id="manual-code" placeholder="Paste or type a ticket code" autocomplete="off"><button type="submit" class="secondary">Check</button></form>
+    <form id="cash-form" class="row noprint"><input id="cash-amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Cash amount" style="max-width:10rem"><button type="submit" class="secondary">Cash admit</button><button type="button" id="comp" class="secondary">Comp admit</button></form>
+    <div class="row noprint"><button id="to-list" class="secondary">Door list</button><button id="resync" class="secondary">Re-sync</button><button id="to-setup" class="quiet">Setup</button></div>
+  </section>
+
+  <section id="list" hidden>
+    <div class="row noprint"><input id="list-filter" placeholder="Search name or #serial" autocomplete="off"><button id="print" class="secondary">Print list</button><button id="to-scan">Back to scanner</button></div>
+    <table><thead><tr><th>Name</th><th>Class</th><th>#</th><th></th></tr></thead><tbody id="list-body"></tbody></table>
+    <p class="fine">Printed list: tick names as they arrive. It is the fallback if every phone dies.</p>
+  </section>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
