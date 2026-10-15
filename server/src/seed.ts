@@ -38,9 +38,12 @@ export async function seedDemo(store: RecordStore, keys: IssuerKeys): Promise<{ 
   await put(C.program, { ...fx("program"), event: ev }, "3lhprog0000001");
 
   const orderFx = fx("order") as { items: { ticketClass: { uri: string }; quantity: number; unitPrice: unknown }[] };
+  // The fixture order lists two paid seats and one free seat; the seed issues exactly one paid ticket, so the
+  // order is narrowed to match and the reconciliation sheet stays internally consistent.
   const order = await put(C.order, {
     ...orderFx, event: ev,
-    items: orderFx.items.map((it) => ({ ...it, ticketClass: it.ticketClass.uri.includes("free") ? strongRef(free) : strongRef(paid) })),
+    items: [{ ...orderFx.items[0]!, quantity: 1, ticketClass: strongRef(paid) }],
+    total: { amountCents: 500, currency: "USD" },
   }, "3lhorder000001");
 
   // The fixture ticket carries a placeholder token; re-sign it for real so the demo scanner can verify it.

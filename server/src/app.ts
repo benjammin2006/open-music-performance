@@ -1,6 +1,6 @@
 // HTTP routes. Public pages, open feeds and exports, the free RSVP flow, and a token-guarded write API.
 // Paid checkout is a stub until server/payments lands (docs/DEMO_PLAN.md build list).
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import QRCode from "qrcode";
 import type { DatabaseSync } from "node:sqlite";
 import type { Lexicons } from "@atproto/lexicon";
@@ -12,6 +12,9 @@ import { icalCalendar } from "./ical.ts";
 import { eventPage, posterPage } from "./pages/event.ts";
 import { orgPage } from "./pages/org.ts";
 import { orderPage } from "./pages/order.ts";
+import { reconciliationPage, doorCodePrompt } from "./pages/reconciliation.ts";
+import { attendanceCsv, reconcile, summaryCsv, type DoorScanRecord, type DonationRecord } from "./reconcile.ts";
+import { getCookie, setCookie } from "hono/cookie";
 import { esc, layout } from "./render.ts";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -96,6 +99,38 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
     if (!body || !Array.isArray(body.scans)) return c.text("expected { scans: [] }", 400);
     return c.json({ accepted: await svc.recordScans(event, body.scans.slice(0, 5000)) });
   });
+
+  // Reconciliation sheet and CSVs. Organizer access via the door code held in a session cookie (never in the URL).
+  const cookieName = (rkey: string) => `omp_door_${rkey}`;
+  const sheetAuth = (c: Context, event: Stored<Event>) => keys.checkDoorCode(event.uri, getCookie(c, cookieName(event.rkey)) ?? "");
+  const buildSheet = (event: Stored<Event>) => reconcile({
+    event, classes: svc.ticketClassesFor(event),
+    orders: store.listReferencing<Order>(C.order, event.uri, 100_000), tickets: store.listReferencing<Ticket>(C.ticket, event.uri, 100_000),
+    scans: store.listReferencing<DoorScanRecord>(C.doorScan, event.uri, 100_000), donations: store.listReferencing<DonationRecord>(C.donation, event.uri, 100_000),
+  });
+  app.get("/e/:did/:rkey/reconciliation", (c) => {
+    const event = store.get<Event>(c.req.param("did"), C.event, c.req.param("rkey"));
+    if (!event) return c.notFound();
+    c.header("Cache-Control", "private, no-store");
+    if (!sheetAuth(c, event)) return c.html(doorCodePrompt(event.record.title, `/e/${event.did}/${event.rkey}/reconciliation`), 401);
+    return c.html(reconciliationPage(buildSheet(event), `/e/${event.did}/${event.rkey}`));
+  });
+  app.post("/e/:did/:rkey/reconciliation", async (c) => {
+    const event = store.get<Event>(c.req.param("did"), C.event, c.req.param("rkey"));
+    if (!event) return c.notFound();
+    const code = String((await c.req.parseBody())["code"] ?? "").trim();
+    if (!keys.checkDoorCode(event.uri, code)) return c.html(doorCodePrompt(event.record.title, `/e/${event.did}/${event.rkey}/reconciliation`, true), 401);
+    setCookie(c, cookieName(event.rkey), code, { httpOnly: true, sameSite: "Lax", path: `/e/${event.did}/${event.rkey}`, secure: cfg.baseUrl.startsWith("https") });
+    return c.redirect(`/e/${event.did}/${event.rkey}/reconciliation`, 303);
+  });
+  for (const [path, fn, name] of [["reconciliation.csv", summaryCsv, "reconciliation"], ["attendance.csv", attendanceCsv, "attendance"]] as const) {
+    app.get(`/e/:did/:rkey/${path}`, (c) => {
+      const event = store.get<Event>(c.req.param("did"), C.event, c.req.param("rkey"));
+      if (!event) return c.notFound();
+      if (!sheetAuth(c, event)) return c.text("organizer access required", 401);
+      return c.body(fn(buildSheet(event)), 200, { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${name}-${event.rkey}.csv"`, "Cache-Control": "private, no-store" });
+    });
+  }
 
   // Scanner PWA, served from apps/scanner/dist (run `npm run build` first).
   const scannerDir = fileURLToPath(new URL("../../apps/scanner/dist/", import.meta.url));

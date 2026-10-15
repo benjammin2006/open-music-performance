@@ -201,3 +201,28 @@ test("scanner PWA is served under /scan/ when built", async () => {
     assert.equal((await app.request("/scan/../../package.json")).status, 404);
   }
 });
+
+test("reconciliation sheet needs the door code via cookie, then renders totals and CSVs", async () => {
+  const { app } = await fresh();
+  const { DEMO_DOOR_CODE } = await import("../src/seed.ts");
+  const locked = await app.request(`${EVENT_PATH}/reconciliation`);
+  assert.equal(locked.status, 401);
+  assert.match(await locked.text(), /Organizer access/);
+  const bad = await app.request(`${EVENT_PATH}/reconciliation`, { method: "POST", body: new URLSearchParams({ code: "nope" }) });
+  assert.equal(bad.status, 401);
+  const ok = await app.request(`${EVENT_PATH}/reconciliation`, { method: "POST", body: new URLSearchParams({ code: DEMO_DOOR_CODE }) });
+  assert.equal(ok.status, 303);
+  const cookie = ok.headers.get("set-cookie")!;
+  assert.match(cookie, /HttpOnly/);
+  const page = await app.request(`${EVENT_PATH}/reconciliation`, { headers: { cookie: cookie.split(";")[0]! } });
+  assert.equal(page.status, 200);
+  const html = await page.text();
+  assert.match(html, /Cash to deposit/);
+  assert.match(html, /Jordan Rivera/);
+  assert.match(html, /General admission/);
+  const csv = await app.request(`${EVENT_PATH}/reconciliation.csv`, { headers: { cookie: cookie.split(";")[0]! } });
+  assert.equal(csv.status, 200);
+  assert.match(csv.headers.get("content-type") ?? "", /text\/csv/);
+  assert.match(await csv.text(), /CASH TO DEPOSIT/);
+  assert.equal((await app.request(`${EVENT_PATH}/attendance.csv`)).status, 401);
+});
