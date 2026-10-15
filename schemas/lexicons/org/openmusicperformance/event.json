@@ -1,0 +1,55 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.event",
+  "description": "A dated occurrence at a place, hosted by an organization. Maps to schema.org MusicEvent. Ticket classes, performances and the program are separate records that reference the event.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["title", "startsAt", "timezone", "location", "status", "refundPolicy", "feeDisclosure", "createdAt"],
+        "properties": {
+          "title": { "type": "string", "maxGraphemes": 200, "maxLength": 2000 },
+          "description": { "type": "string", "maxGraphemes": 5000, "maxLength": 50000 },
+          "startsAt": { "type": "string", "format": "datetime" },
+          "endsAt": { "type": "string", "format": "datetime" },
+          "doorsAt": { "type": "string", "format": "datetime" },
+          "timezone": { "type": "string", "maxLength": 64, "description": "IANA timezone name used to display times." },
+          "location": { "type": "ref", "ref": "org.openmusicperformance.defs#location" },
+          "venue": { "type": "string", "format": "did", "description": "DID of the venue organization, when it is a distinct OMP organization." },
+          "status": { "type": "string", "knownValues": ["draft", "published", "cancelled", "postponed", "completed"] },
+          "visibility": { "type": "string", "knownValues": ["public", "unlisted"], "default": "public" },
+          "ageRestriction": { "type": "string", "maxLength": 40, "description": "Free text such as 'All ages' or '21+'." },
+          "refundPolicy": { "type": "ref", "ref": "#refundPolicy" },
+          "feeDisclosure": { "type": "ref", "ref": "#feeDisclosure" },
+          "taxNote": { "type": "string", "maxGraphemes": 500, "maxLength": 5000, "description": "Organizer-set statement of any sales or amusement tax included in the all-in price." },
+          "poster": { "type": "blob", "accept": ["image/png", "image/jpeg", "image/webp"], "maxSize": 5000000 },
+          "tags": { "type": "array", "maxLength": 10, "items": { "type": "string", "maxGraphemes": 50, "maxLength": 500 } },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "refundPolicy": {
+      "type": "object",
+      "description": "Machine-readable refund policy. Defaults are the fan-expected norm: full refund of the all-in price on cancellation.",
+      "required": ["onCancellation", "onPostponement"],
+      "properties": {
+        "onCancellation": { "type": "string", "knownValues": ["full", "none"], "description": "What a buyer gets if the event is cancelled." },
+        "onPostponement": { "type": "string", "knownValues": ["full", "honor", "honorOrFull"], "description": "honor: ticket is valid for the new date; honorOrFull: buyer may choose." },
+        "buyerCancellation": { "type": "string", "knownValues": ["none", "untilDoors", "custom"], "default": "none" },
+        "text": { "type": "string", "maxGraphemes": 2000, "maxLength": 20000, "description": "Human-readable policy shown at checkout." }
+      }
+    },
+    "feeDisclosure": {
+      "type": "object",
+      "description": "What the all-in price includes. The platform fee is always disclosed; for OMP v1 it is zero.",
+      "required": ["platformFeeCents"],
+      "properties": {
+        "platformFeeCents": { "type": "integer", "minimum": 0, "description": "Per-ticket platform fee included in the all-in price. 0 in OMP v1." },
+        "organizerFeeCents": { "type": "integer", "minimum": 0, "description": "Optional per-ticket fee the organizer sets and keeps, disclosed as its own line." },
+        "processorNote": { "type": "string", "maxGraphemes": 300, "maxLength": 3000, "description": "Statement that card processing is paid by the organizer from the all-in price." }
+      }
+    }
+  }
+}

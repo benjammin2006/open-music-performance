@@ -1,0 +1,37 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.order",
+  "description": "A purchase or free reservation of one or more tickets for one event. Private to the organizer; the buyer receives a copy. Maps to schema.org Order. The payment provider is the merchant of record relationship the organizer holds; OMP never holds funds.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["event", "items", "buyer", "status", "paymentProvider", "total", "createdAt"],
+        "properties": {
+          "event": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "items": { "type": "array", "minLength": 1, "maxLength": 20, "items": { "type": "ref", "ref": "#item" } },
+          "buyer": { "type": "ref", "ref": "org.openmusicperformance.defs#contact" },
+          "status": { "type": "string", "knownValues": ["pending", "paid", "free", "refunded", "partiallyRefunded", "cancelled", "failed"] },
+          "paymentProvider": { "type": "string", "knownValues": ["none", "stripe", "square", "cash", "check", "other"] },
+          "paymentRef": { "type": "string", "maxLength": 256, "description": "Provider-side id, e.g. a Stripe Checkout Session id. Never card data." },
+          "total": { "type": "ref", "ref": "org.openmusicperformance.defs#money" },
+          "refundedTotal": { "type": "ref", "ref": "org.openmusicperformance.defs#money" },
+          "notes": { "type": "string", "maxGraphemes": 1000, "maxLength": 10000 },
+          "createdAt": { "type": "string", "format": "datetime" },
+          "paidAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": ["ticketClass", "quantity", "unitPrice"],
+      "properties": {
+        "ticketClass": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef", "description": "Strong ref freezes the class as sold, so later price edits do not rewrite history." },
+        "quantity": { "type": "integer", "minimum": 1 },
+        "unitPrice": { "type": "ref", "ref": "org.openmusicperformance.defs#money" }
+      }
+    }
+  }
+}

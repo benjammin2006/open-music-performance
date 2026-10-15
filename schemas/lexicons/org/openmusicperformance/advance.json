@@ -1,0 +1,19 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.advance",
+  "description": "RESERVED, not implemented in v1. Show advance for one performance: stage plot, input list, backline, hospitality, schedule, contacts. No open standard exists for this today; defining it is contributor-ready white space (docs/ARCHITECTURE.md 5.6).",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["reserved", "createdAt"],
+        "properties": {
+          "reserved": { "type": "boolean", "const": true, "description": "Always true while this record type is reserved. Any instance in the wild is a bug." },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

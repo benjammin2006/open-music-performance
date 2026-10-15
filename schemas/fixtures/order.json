@@ -1,0 +1,15 @@
+{
+  "$type": "org.openmusicperformance.order",
+  "event": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.event/3lhevent000001", "cid": "bafyreicobi5ebituqdifh2flj4zavn3y433ckgfacsvtki6tww2vehps2u" },
+  "items": [
+    { "ticketClass": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.ticketClass/3lhtcpaid00001", "cid": "bafyreih45mcavgt4djnwslpmyujgvqsrim6x44fkwakx753vi2wug62jsy" }, "quantity": 2, "unitPrice": { "amountCents": 500, "currency": "USD" } },
+    { "ticketClass": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.ticketClass/3lhtcfree00001", "cid": "bafyreifnrils56djyfimcs7p3drbsdm643laiay4ajaxiikrlxwdtw3mbq" }, "quantity": 1, "unitPrice": { "amountCents": 0, "currency": "USD" } }
+  ],
+  "buyer": { "name": "Jordan Rivera", "email": "jordan.rivera@example.com", "marketingConsent": true },
+  "status": "paid",
+  "paymentProvider": "stripe",
+  "paymentRef": "cs_test_a1B2c3D4e5F6g7H8i9J0",
+  "total": { "amountCents": 1000, "currency": "USD" },
+  "createdAt": "2026-11-20T18:04:11Z",
+  "paidAt": "2026-11-20T18:04:40Z"
+}

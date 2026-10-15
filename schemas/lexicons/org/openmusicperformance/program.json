@@ -1,0 +1,36 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.program",
+  "description": "The digital program for an event: repertoire, performers as the organizer chooses to credit them, and notes. This is organizer-entered public content, the same as a printed program; it is not a student record and holds no contact details.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["event", "pieces", "createdAt"],
+        "properties": {
+          "event": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "title": { "type": "string", "maxGraphemes": 200, "maxLength": 2000 },
+          "pieces": { "type": "array", "maxLength": 200, "items": { "type": "ref", "ref": "#piece" } },
+          "notes": { "type": "string", "maxGraphemes": 5000, "maxLength": 50000, "description": "Director's notes, acknowledgements, sponsors." },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "piece": {
+      "type": "object",
+      "required": ["order", "title"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 0 },
+        "title": { "type": "string", "maxGraphemes": 300, "maxLength": 3000 },
+        "composer": { "type": "string", "maxGraphemes": 200, "maxLength": 2000 },
+        "arranger": { "type": "string", "maxGraphemes": 200, "maxLength": 2000 },
+        "performedBy": { "type": "string", "maxGraphemes": 500, "maxLength": 5000, "description": "Ensemble or performer credit as printed, e.g. 'Wind Ensemble' or 'Soloist: J. Rivera'." },
+        "durationSeconds": { "type": "integer", "minimum": 0 },
+        "notes": { "type": "string", "maxGraphemes": 2000, "maxLength": 20000 },
+        "isIntermission": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}

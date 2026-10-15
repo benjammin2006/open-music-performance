@@ -1,0 +1,29 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.ticket",
+  "description": "A single admission credential, signed by the organization's issuer key. The record is the organizer's ledger entry; the holder carries the compact signed token (see packages/tickets for the token format). Maps to schema.org Ticket.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["event", "ticketClass", "order", "serial", "status", "issuerKid", "issuedAt"],
+        "properties": {
+          "event": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "ticketClass": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "order": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "serial": { "type": "integer", "minimum": 0, "description": "Per-event index; its bit in the event's status list marks revocation." },
+          "status": { "type": "string", "knownValues": ["valid", "revoked", "refunded", "transferred"] },
+          "holderBinding": { "type": "string", "maxLength": 128, "description": "Hash of the holder's email or holder public key, carried in the token so a scanner can prompt for a name match. Never the raw email." },
+          "holderLabel": { "type": "string", "maxGraphemes": 200, "maxLength": 2000, "description": "Name shown on the door list, as the buyer entered it." },
+          "issuerKid": { "type": "string", "maxLength": 128 },
+          "token": { "type": "string", "maxLength": 2048, "description": "The compact signed token encoded in the QR code. Stored so the organizer can re-send it." },
+          "issuedAt": { "type": "string", "format": "datetime" },
+          "revokedAt": { "type": "string", "format": "datetime" },
+          "revocationReason": { "type": "string", "maxGraphemes": 300, "maxLength": 3000 }
+        }
+      }
+    }
+  }
+}

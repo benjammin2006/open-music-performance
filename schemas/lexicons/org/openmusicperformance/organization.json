@@ -1,0 +1,35 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.organization",
+  "description": "A school music program, ensemble organization, venue, concert series, or promoter. The owner of events, ticket classes, orders, tickets, scans, programs and donations. Maps to schema.org Organization, MusicVenue or MusicGroup depending on kind.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["name", "kind", "createdAt"],
+        "properties": {
+          "name": { "type": "string", "maxGraphemes": 200, "maxLength": 2000 },
+          "kind": {
+            "type": "string",
+            "knownValues": ["school", "ensemble", "venue", "series", "promoter", "congregation", "other"]
+          },
+          "description": { "type": "string", "maxGraphemes": 3000, "maxLength": 30000 },
+          "website": { "type": "string", "format": "uri" },
+          "links": { "type": "array", "maxLength": 20, "items": { "type": "ref", "ref": "org.openmusicperformance.defs#externalLink" } },
+          "location": { "type": "ref", "ref": "org.openmusicperformance.defs#location" },
+          "timezone": { "type": "string", "maxLength": 64, "description": "IANA timezone name, e.g. America/Chicago." },
+          "issuerKeys": {
+            "type": "array",
+            "maxLength": 10,
+            "description": "Current and recently rotated ticket-signing keys. Scanners accept any listed key within its validity window.",
+            "items": { "type": "ref", "ref": "org.openmusicperformance.defs#issuerKey" }
+          },
+          "avatar": { "type": "blob", "accept": ["image/png", "image/jpeg", "image/webp"], "maxSize": 2000000 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

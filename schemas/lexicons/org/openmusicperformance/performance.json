@@ -1,0 +1,26 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.performance",
+  "description": "One act performing at one event: the atom of the performance database. Maps to schema.org MusicEvent.performer and subEvent. Either act (a reference) or actName (free text for acts without a record) is required; validation of that rule is in the application layer.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["event", "order", "createdAt"],
+        "properties": {
+          "event": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "act": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "actName": { "type": "string", "maxGraphemes": 200, "maxLength": 2000 },
+          "role": { "type": "string", "knownValues": ["headliner", "support", "ensemble", "soloist", "guest", "opener"] },
+          "order": { "type": "integer", "minimum": 0, "description": "Position in the running order, 0 first." },
+          "setStartsAt": { "type": "string", "format": "datetime" },
+          "setEndsAt": { "type": "string", "format": "datetime" },
+          "notes": { "type": "string", "maxGraphemes": 1000, "maxLength": 10000 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

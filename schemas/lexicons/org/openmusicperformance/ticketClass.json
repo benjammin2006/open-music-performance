@@ -1,0 +1,29 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.ticketClass",
+  "description": "A sellable or reservable class of admission for an event: free RSVP, paid general admission, donation-based, or comp. Maps to schema.org Offer. Price is the all-in price the buyer pays.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["event", "name", "kind", "price", "createdAt"],
+        "properties": {
+          "event": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "name": { "type": "string", "maxGraphemes": 100, "maxLength": 1000 },
+          "kind": { "type": "string", "knownValues": ["freeRsvp", "paid", "payWhatYouWant", "comp"] },
+          "price": { "type": "ref", "ref": "org.openmusicperformance.defs#money", "description": "All-in price. amountCents is 0 for freeRsvp and comp, and the suggested amount for payWhatYouWant." },
+          "minimumPrice": { "type": "ref", "ref": "org.openmusicperformance.defs#money", "description": "Floor for payWhatYouWant." },
+          "capacity": { "type": "integer", "minimum": 0, "description": "Maximum tickets in this class. Omit for unlimited." },
+          "perOrderLimit": { "type": "integer", "minimum": 1, "default": 10, "description": "Advertised and enforced per-order maximum. If advertised it must be enforced (BOTS Act posture)." },
+          "salesStartAt": { "type": "string", "format": "datetime" },
+          "salesEndAt": { "type": "string", "format": "datetime" },
+          "description": { "type": "string", "maxGraphemes": 1000, "maxLength": 10000 },
+          "sortOrder": { "type": "integer", "minimum": 0 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

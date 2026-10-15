@@ -1,0 +1,29 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.doorScan",
+  "description": "One check-in event at the door: a QR scan, a manual name-list admit, a cash sale, or a comp. Written by the scanner device, possibly offline, and uploaded with a nonce so replays are idempotent. The reconciliation sheet is computed from these.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["event", "scannerId", "nonce", "result", "scannedAt"],
+        "properties": {
+          "event": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "ticket": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef", "description": "Absent for cash and walk-up admits with no ticket." },
+          "scannerId": { "type": "string", "maxLength": 128, "description": "Stable id of the scanning device or operator." },
+          "nonce": { "type": "string", "maxLength": 128, "description": "Unique per scan; the server ignores a second upload with the same nonce." },
+          "result": {
+            "type": "string",
+            "knownValues": ["admitted", "duplicate", "invalid", "revoked", "expired", "manualAdmit", "cashAdmit", "compAdmit", "denied"]
+          },
+          "cashCollected": { "type": "ref", "ref": "org.openmusicperformance.defs#money", "description": "Set on cashAdmit. Feeds the deposit total." },
+          "offline": { "type": "boolean", "description": "True if the scanner had no connection to the hub or server at the moment of the scan." },
+          "note": { "type": "string", "maxGraphemes": 300, "maxLength": 3000 },
+          "scannedAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

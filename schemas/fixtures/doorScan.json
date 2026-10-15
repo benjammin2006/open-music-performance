@@ -1,0 +1,10 @@
+{
+  "$type": "org.openmusicperformance.doorScan",
+  "event": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.event/3lhevent000001", "cid": "bafyreicobi5ebituqdifh2flj4zavn3y433ckgfacsvtki6tww2vehps2u" },
+  "ticket": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.ticket/3lhticket00001", "cid": "bafyreiaytmni4ft53lddot4dt3q3mmobqoezq67mmljihftlvxhblw2dka" },
+  "scannerId": "door-north-phone-1",
+  "nonce": "01JCDEMO0000000000SCAN0001",
+  "result": "admitted",
+  "offline": true,
+  "scannedAt": "2026-12-16T00:41:12Z"
+}

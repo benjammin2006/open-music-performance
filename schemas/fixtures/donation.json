@@ -1,0 +1,12 @@
+{
+  "$type": "org.openmusicperformance.donation",
+  "event": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.event/3lhevent000001", "cid": "bafyreicobi5ebituqdifh2flj4zavn3y433ckgfacsvtki6tww2vehps2u" },
+  "amount": { "amountCents": 2500, "currency": "USD" },
+  "donor": { "name": "Pat Okafor", "email": "pat.okafor@example.com" },
+  "anonymous": false,
+  "paymentProvider": "stripe",
+  "paymentRef": "pi_test_3Q9xYzAbCdEfGhIj",
+  "status": "completed",
+  "message": "Go bands!",
+  "createdAt": "2026-11-21T02:15:00Z"
+}

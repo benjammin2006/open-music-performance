@@ -1,0 +1,26 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.donation",
+  "description": "A gift to the organization, optionally tied to an event. Collected on the organizer's own payment account or logged from cash. Maps to schema.org DonateAction.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["amount", "paymentProvider", "status", "createdAt"],
+        "properties": {
+          "event": { "type": "ref", "ref": "org.openmusicperformance.defs#strongRef" },
+          "amount": { "type": "ref", "ref": "org.openmusicperformance.defs#money" },
+          "donor": { "type": "ref", "ref": "org.openmusicperformance.defs#contact" },
+          "anonymous": { "type": "boolean", "default": false, "description": "If true, the donor is not credited publicly even when a contact is stored for receipts." },
+          "paymentProvider": { "type": "string", "knownValues": ["stripe", "square", "cash", "check", "other"] },
+          "paymentRef": { "type": "string", "maxLength": 256 },
+          "status": { "type": "string", "knownValues": ["pending", "completed", "refunded", "failed"] },
+          "message": { "type": "string", "maxGraphemes": 500, "maxLength": 5000 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.settlementSheet",
+  "description": "RESERVED, not implemented in v1. The signed, finalized reconciliation of gross sales, taxes, fees, approved expenses and the amount due to each party for one event. Concurrent edits are allowed until a signed finalize snapshot.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["reserved", "createdAt"],
+        "properties": {
+          "reserved": { "type": "boolean", "const": true, "description": "Always true while this record type is reserved. Any instance in the wild is a bug." },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

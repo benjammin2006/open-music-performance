@@ -1,0 +1,33 @@
+{
+  "$type": "org.openmusicperformance.event",
+  "title": "Winter Concert",
+  "description": "The Lincoln High School Bands present their annual Winter Concert featuring the Concert Band, Wind Ensemble and Jazz Band. Doors at 6:30 pm.",
+  "startsAt": "2026-12-16T01:00:00Z",
+  "endsAt": "2026-12-16T02:30:00Z",
+  "doorsAt": "2026-12-16T00:30:00Z",
+  "timezone": "America/Chicago",
+  "location": {
+    "name": "Lincoln High School Auditorium",
+    "streetAddress": "100 Example Avenue",
+    "locality": "Springfield",
+    "region": "IL",
+    "postalCode": "62701",
+    "country": "US",
+    "capacity": 400
+  },
+  "status": "published",
+  "visibility": "public",
+  "ageRestriction": "All ages",
+  "refundPolicy": {
+    "onCancellation": "full",
+    "onPostponement": "honorOrFull",
+    "buyerCancellation": "none",
+    "text": "If the concert is cancelled you receive a full refund of the price you paid. If it is postponed your ticket is valid for the new date, or you may request a full refund."
+  },
+  "feeDisclosure": {
+    "platformFeeCents": 0,
+    "processorNote": "The price shown is the price you pay. Card processing is paid by Lincoln High School Bands out of that price."
+  },
+  "tags": ["school", "band", "winter concert"],
+  "createdAt": "2026-10-15T15:10:00Z"
+}

@@ -1,0 +1,9 @@
+{
+  "$type": "org.openmusicperformance.act",
+  "name": "Lincoln Wind Ensemble",
+  "kind": "ensemble",
+  "description": "Auditioned wind ensemble, grades 10 to 12.",
+  "genres": ["concert band", "wind ensemble"],
+  "homeLocation": { "name": "Lincoln High School", "locality": "Springfield", "region": "IL", "country": "US" },
+  "createdAt": "2026-10-15T15:05:00Z"
+}

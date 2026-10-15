@@ -1,0 +1,13 @@
+{
+  "$type": "org.openmusicperformance.ticket",
+  "event": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.event/3lhevent000001", "cid": "bafyreicobi5ebituqdifh2flj4zavn3y433ckgfacsvtki6tww2vehps2u" },
+  "ticketClass": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.ticketClass/3lhtcpaid00001", "cid": "bafyreih45mcavgt4djnwslpmyujgvqsrim6x44fkwakx753vi2wug62jsy" },
+  "order": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.order/3lhorder000001", "cid": "bafyreiaytmni4ft53lddot4dt3q3mmobqoezq67mmljihftlvxhblw2dka" },
+  "serial": 42,
+  "status": "valid",
+  "holderBinding": "sha256:6b1b36cbb04b41490bfc0ab2bfa26f86f8d6c0d2d0a1f7c9c3e7b1a2d4e5f607",
+  "holderLabel": "Jordan Rivera",
+  "issuerKid": "lincoln-2026-1",
+  "token": "OMP1.eyJ2IjoxLCJpc3MiOiJsaW5jb2xuLTIwMjYtMSIsImV2dCI6IjNsaGV2ZW50MDAwMDAxIiwidGlkIjo0Mn0.placeholder-signature",
+  "issuedAt": "2026-11-20T18:04:41Z"
+}

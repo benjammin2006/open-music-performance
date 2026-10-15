@@ -1,0 +1,20 @@
+{
+  "name": "open-music-performance",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Free, open-source, self-hostable live-music platform. Planning and schema stage.",
+  "workspaces": [
+    "schemas",
+    "packages/*",
+    "apps/*",
+    "server"
+  ],
+  "scripts": {
+    "schema:check": "npm run check -w @omp/schemas",
+    "schema:docs": "npm run docs -w @omp/schemas",
+    "test": "npm run schema:check"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

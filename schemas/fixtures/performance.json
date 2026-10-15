@@ -1,0 +1,10 @@
+{
+  "$type": "org.openmusicperformance.performance",
+  "event": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.event/3lhevent000001", "cid": "bafyreicobi5ebituqdifh2flj4zavn3y433ckgfacsvtki6tww2vehps2u" },
+  "act": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.act/3lhact00000001", "cid": "bafyreigqw4djcamoewf54a3vcvunqvvjf3yltfrjwy7pffg263pz6c37pe" },
+  "role": "ensemble",
+  "order": 1,
+  "setStartsAt": "2026-12-16T01:35:00Z",
+  "setEndsAt": "2026-12-16T02:05:00Z",
+  "createdAt": "2026-10-15T15:12:00Z"
+}

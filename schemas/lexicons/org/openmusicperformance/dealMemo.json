@@ -1,0 +1,19 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.dealMemo",
+  "description": "RESERVED, not implemented in v1. The agreed terms between an organization and an act for one event: guarantee or door split, backend, merch terms, rider references, cancellation terms. Allocated now so the settlement wedge adds records instead of reshaping existing ones (docs/SCOPE_CHARTER.md section 3).",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["reserved", "createdAt"],
+        "properties": {
+          "reserved": { "type": "boolean", "const": true, "description": "Always true while this record type is reserved. Any instance in the wild is a bug." },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

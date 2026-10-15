@@ -1,0 +1,71 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.defs",
+  "description": "Shared definitions for Open Music Performance records. STUBBORN_FACT: the NSID prefix org.openmusicperformance is a placeholder until the fiscal sponsor owns a domain; it is referenced only through the lexicon ids, so renaming is a search-and-replace across schemas/ (see docs/ARCHITECTURE.md Q1).",
+  "defs": {
+    "strongRef": {
+      "type": "object",
+      "description": "A reference to a specific version of another record.",
+      "required": ["uri", "cid"],
+      "properties": {
+        "uri": { "type": "string", "format": "at-uri" },
+        "cid": { "type": "string", "format": "cid" }
+      }
+    },
+    "money": {
+      "type": "object",
+      "description": "An amount in minor units of an ISO 4217 currency. 500 USD cents is $5.00.",
+      "required": ["amountCents", "currency"],
+      "properties": {
+        "amountCents": { "type": "integer", "minimum": 0 },
+        "currency": { "type": "string", "minLength": 3, "maxLength": 3, "description": "ISO 4217 code, upper case." }
+      }
+    },
+    "location": {
+      "type": "object",
+      "description": "A physical place. Address fields are optional so a house concert can withhold its street address until RSVP.",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "maxGraphemes": 200, "maxLength": 2000 },
+        "streetAddress": { "type": "string", "maxGraphemes": 300, "maxLength": 3000 },
+        "locality": { "type": "string", "maxGraphemes": 100, "maxLength": 1000, "description": "City or town." },
+        "region": { "type": "string", "maxGraphemes": 100, "maxLength": 1000, "description": "State or province." },
+        "postalCode": { "type": "string", "maxGraphemes": 20, "maxLength": 200 },
+        "country": { "type": "string", "minLength": 2, "maxLength": 2, "description": "ISO 3166-1 alpha-2." },
+        "capacity": { "type": "integer", "minimum": 0 },
+        "accessibilityNotes": { "type": "string", "maxGraphemes": 1000, "maxLength": 10000 }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "description": "An adult contact collected by the organizer. Never a student record (docs/ARCHITECTURE.md section 7).",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "maxGraphemes": 200, "maxLength": 2000 },
+        "email": { "type": "string", "maxLength": 320 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "marketingConsent": { "type": "boolean", "description": "True only if the person opted in to be contacted about future events." }
+      }
+    },
+    "issuerKey": {
+      "type": "object",
+      "description": "The public half of an organization's Ed25519 ticket-signing key.",
+      "required": ["kid", "alg", "publicKeyMultibase"],
+      "properties": {
+        "kid": { "type": "string", "maxLength": 128, "description": "Key id carried in every signed ticket." },
+        "alg": { "type": "string", "knownValues": ["Ed25519"] },
+        "publicKeyMultibase": { "type": "string", "maxLength": 128, "description": "Multibase (base58btc, z-prefixed) encoding of the raw public key." },
+        "validFrom": { "type": "string", "format": "datetime" },
+        "validUntil": { "type": "string", "format": "datetime" }
+      }
+    },
+    "externalLink": {
+      "type": "object",
+      "required": ["uri"],
+      "properties": {
+        "uri": { "type": "string", "format": "uri" },
+        "label": { "type": "string", "maxGraphemes": 100, "maxLength": 1000 }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$type": "org.openmusicperformance.organization",
+  "name": "Lincoln High School Bands",
+  "kind": "school",
+  "description": "Fictional demo organization from docs/DEMO_PLAN.md. Concert band, wind ensemble and jazz band at Lincoln High School.",
+  "website": "https://lincolnbands.example",
+  "location": {
+    "name": "Lincoln High School Auditorium",
+    "streetAddress": "100 Example Avenue",
+    "locality": "Springfield",
+    "region": "IL",
+    "postalCode": "62701",
+    "country": "US",
+    "capacity": 400,
+    "accessibilityNotes": "Step-free entrance on the north side; wheelchair spaces in rows A and M."
+  },
+  "timezone": "America/Chicago",
+  "issuerKeys": [
+    {
+      "kid": "lincoln-2026-1",
+      "alg": "Ed25519",
+      "publicKeyMultibase": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+      "validFrom": "2026-10-01T00:00:00Z"
+    }
+  ],
+  "createdAt": "2026-10-15T15:00:00Z"
+}

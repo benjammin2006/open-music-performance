@@ -1,0 +1,29 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.act",
+  "description": "A performing unit: ensemble, band, choir, orchestra, or soloist. Owned by the act itself when it has its own account, otherwise by the organization that created it. Maps to schema.org MusicGroup or Person.",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["name", "kind", "createdAt"],
+        "properties": {
+          "name": { "type": "string", "maxGraphemes": 200, "maxLength": 2000 },
+          "kind": {
+            "type": "string",
+            "knownValues": ["ensemble", "band", "choir", "orchestra", "soloist", "duo", "other"]
+          },
+          "description": { "type": "string", "maxGraphemes": 3000, "maxLength": 30000 },
+          "genres": { "type": "array", "maxLength": 10, "items": { "type": "string", "maxGraphemes": 50, "maxLength": 500 } },
+          "website": { "type": "string", "format": "uri" },
+          "links": { "type": "array", "maxLength": 20, "items": { "type": "ref", "ref": "org.openmusicperformance.defs#externalLink" } },
+          "homeLocation": { "type": "ref", "ref": "org.openmusicperformance.defs#location" },
+          "avatar": { "type": "blob", "accept": ["image/png", "image/jpeg", "image/webp"], "maxSize": 2000000 },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

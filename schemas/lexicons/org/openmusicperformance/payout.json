@@ -1,0 +1,19 @@
+{
+  "lexicon": 1,
+  "id": "org.openmusicperformance.payout",
+  "description": "RESERVED, not implemented in v1. A transfer of settled funds to a party, recorded when Stripe Connect split payouts exist. Gated by a money-transmission counsel opinion and a legal entity (docs/SCOPE_CHARTER.md section 6).",
+  "defs": {
+    "main": {
+      "type": "record",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["reserved", "createdAt"],
+        "properties": {
+          "reserved": { "type": "boolean", "const": true, "description": "Always true while this record type is reserved. Any instance in the wild is a bug." },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

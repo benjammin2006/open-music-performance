@@ -1,0 +1,17 @@
+{
+  "$type": "org.openmusicperformance.program",
+  "event": { "uri": "at://did:web:lincolnbands.example/org.openmusicperformance.event/3lhevent000001", "cid": "bafyreicobi5ebituqdifh2flj4zavn3y433ckgfacsvtki6tww2vehps2u" },
+  "title": "Winter Concert Program",
+  "pieces": [
+    { "order": 0, "title": "Sleigh Ride", "composer": "Leroy Anderson", "performedBy": "Concert Band", "durationSeconds": 180 },
+    { "order": 1, "title": "Greensleeves", "composer": "Traditional", "arranger": "Alfred Reed", "performedBy": "Concert Band", "durationSeconds": 300 },
+    { "order": 2, "title": "Russian Christmas Music", "composer": "Alfred Reed", "performedBy": "Wind Ensemble", "durationSeconds": 900 },
+    { "order": 3, "title": "Intermission", "isIntermission": true, "durationSeconds": 600 },
+    { "order": 4, "title": "Lincolnshire Posy", "composer": "Percy Grainger", "performedBy": "Wind Ensemble", "durationSeconds": 960 },
+    { "order": 5, "title": "Let It Snow", "composer": "Jule Styne", "arranger": "Roger Holmes", "performedBy": "Jazz Band", "durationSeconds": 240 },
+    { "order": 6, "title": "Christmas Time Is Here", "composer": "Vince Guaraldi", "arranger": "Mike Tomaro", "performedBy": "Jazz Band", "durationSeconds": 260 },
+    { "order": 7, "title": "A Christmas Festival", "composer": "Leroy Anderson", "performedBy": "Combined Bands", "durationSeconds": 420 }
+  ],
+  "notes": "Thank you to the Lincoln Band Boosters and to everyone who makes music possible at Lincoln.",
+  "createdAt": "2026-12-01T20:00:00Z"
+}

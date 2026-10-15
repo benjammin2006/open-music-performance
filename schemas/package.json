@@ -1,0 +1,15 @@
+{
+  "name": "@omp/schemas",
+  "version": "0.1.0",
+  "description": "Open Music Performance record schemas as AT Protocol lexicons, with fixtures and a validator.",
+  "license": "MIT",
+  "type": "module",
+  "files": ["lexicons", "fixtures", "README.md", "LICENSE"],
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "docs": "node scripts/gen-docs.mjs"
+  },
+  "dependencies": {
+    "@atproto/lexicon": "^0.7.16"
+  }
+}
