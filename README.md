@@ -75,6 +75,7 @@ Card processing fees (roughly 2.9% + 30 cents per charge) still apply to paid ti
 - Artist, venue, event, performance, and settlement objects are published, permissively licensed schemas designed to map onto AT Protocol lexicons and schema.org MusicEvent.
 - Outbound open feeds from day one: iCal, JSON-LD and RSS, with ActivityPub and AT Protocol later.
 - Fan personal data stays with the organizer that collected it. Shared layers carry only public event data.
+- The hosted instance stores no student records, accounts or rosters, so a teacher can use it without a district data agreement; districts that want more go through the Student Data Privacy Consortium's standard agreement.
 
 Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 

@@ -19,7 +19,7 @@ Open Music Performance (OMP) gives school and community ensembles a free, open-s
 
 ## 3. The one schema
 
-One published schema document defines: Organization, Act, Event, Performance, TicketClass, Ticket, Order, DoorScan, Program, Donation.
+One published schema document defines: Organization, Act, Event, Performance, TicketClass, Ticket, Order, DoorScan, Program, Donation. None of these holds student records; v1 stores no student PII.
 
 DealMemo, Advance and SettlementSheet are reserved in the schema namespace but not implemented in v1.
 
@@ -76,3 +76,4 @@ Stripe Connect split payouts may start only after a money-transmission counsel o
 | Date | Change |
 |---|---|
 | 2026-10-14 | Charter created |
+| 2026-10-15 | Added rule: v1 holds no student PII (no student accounts or rosters), after finding NY Ed Law 2-d and IL SOPPA cover free teacher-adopted tools; district data agreements go through the SDPC NDPA when needed |
