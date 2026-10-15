@@ -5,13 +5,15 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { C, fixturesDir } from "./lexicons.ts";
 import type { IssuerKeys } from "./keys.ts";
+import type { Auth } from "./auth.ts";
 import { strongRef, type RecordStore } from "./records.ts";
 
 export const DEMO_DID = "did:web:lincolnbands.example";
 export const DEMO_EVENT_RKEY = "3lhevent000001";
 export const DEMO_DOOR_CODE = "LINCOLN-DOOR";
+export const DEMO_ORGANIZER_KEY = "LINCOLN-ADMIN";
 
-export async function seedDemo(store: RecordStore, keys: IssuerKeys): Promise<{ did: string; eventRkey: string }> {
+export async function seedDemo(store: RecordStore, keys: IssuerKeys, auth?: Auth): Promise<{ did: string; eventRkey: string }> {
   const fx = (name: string) => JSON.parse(readFileSync(join(fixturesDir(), `${name}.json`), "utf8")) as Record<string, unknown>;
   const did = DEMO_DID;
   const put = (collection: string, record: Record<string, unknown>, rkey: string) => {
@@ -53,6 +55,7 @@ export async function seedDemo(store: RecordStore, keys: IssuerKeys): Promise<{ 
   await put(C.doorScan, { ...fx("doorScan"), event: ev, ticket: strongRef(ticket) }, "3lhscan0000001");
   await put(C.donation, { ...fx("donation"), event: ev }, "3lhdon00000001");
   keys.setDoorCode(event.uri, DEMO_DOOR_CODE);
+  if (auth) await auth.issueKey(did, "demo", DEMO_ORGANIZER_KEY);
 
   return { did, eventRkey: event.rkey };
 }

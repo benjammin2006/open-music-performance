@@ -77,6 +77,11 @@ export class RecordStore {
     return rows.map((r) => toStored<T>(r)).filter((s) => JSON.stringify(s.record).includes(`"${uri}"`));
   }
 
+  delete(did: string, collection: string, rkey: string): boolean {
+    const r = this.db.prepare("DELETE FROM records WHERE did = ? AND collection = ? AND rkey = ?").run(did, collection, rkey);
+    return Number(r.changes) > 0;
+  }
+
   nextSerial(eventUri: string): number {
     this.db.prepare("INSERT INTO serials (event_uri, next) VALUES (?, 1) ON CONFLICT(event_uri) DO UPDATE SET next = next + 1").run(eventUri);
     const row = this.db.prepare("SELECT next FROM serials WHERE event_uri = ?").get(eventUri) as { next: number };

@@ -28,8 +28,15 @@ export class IssuerKeys {
     return key.publicKeyMultibase;
   }
 
+  /** Set the current door code. Older codes stop working, so a rotation forces scanners to re-sync. */
   setDoorCode(eventUri: string, code: string): void {
-    this.db.prepare("INSERT OR IGNORE INTO door_codes (event_uri, code, created_at) VALUES (?, ?, ?)").run(eventUri, code, new Date().toISOString());
+    this.db.prepare("DELETE FROM door_codes WHERE event_uri = ?").run(eventUri);
+    this.db.prepare("INSERT INTO door_codes (event_uri, code, created_at) VALUES (?, ?, ?)").run(eventUri, code, new Date().toISOString());
+  }
+
+  currentDoorCode(eventUri: string): string | null {
+    const row = this.db.prepare("SELECT code FROM door_codes WHERE event_uri = ? ORDER BY created_at DESC LIMIT 1").get(eventUri) as { code: string } | undefined;
+    return row?.code ?? null;
   }
 
   checkDoorCode(eventUri: string, code: string): boolean {

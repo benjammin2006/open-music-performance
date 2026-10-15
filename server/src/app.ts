@@ -15,6 +15,8 @@ import { orderPage } from "./pages/order.ts";
 import { reconciliationPage, doorCodePrompt } from "./pages/reconciliation.ts";
 import { attendanceCsv, reconcile, summaryCsv, type DoorScanRecord, type DonationRecord } from "./reconcile.ts";
 import { getCookie, setCookie } from "hono/cookie";
+import { Auth } from "./auth.ts";
+import { mountAdmin } from "./admin.ts";
 import { esc, layout } from "./render.ts";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -32,7 +34,9 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
   const store = new RecordStore(db, lex);
   const keys = new IssuerKeys(db, store);
   const svc = new Services(store, keys);
+  const auth = new Auth(db);
   const app = new Hono();
+  const admin = mountAdmin(app, { store, keys, svc, auth, baseUrl: cfg.baseUrl });
 
   app.get("/healthz", (c) => c.json({ ok: true, ns: NS }));
 
@@ -102,17 +106,17 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
 
   // Reconciliation sheet and CSVs. Organizer access via the door code held in a session cookie (never in the URL).
   const cookieName = (rkey: string) => `omp_door_${rkey}`;
-  const sheetAuth = (c: Context, event: Stored<Event>) => keys.checkDoorCode(event.uri, getCookie(c, cookieName(event.rkey)) ?? "");
+  const sheetAuth = async (c: Context, event: Stored<Event>) => keys.checkDoorCode(event.uri, getCookie(c, cookieName(event.rkey)) ?? "") || (await admin.sessionDid(c)) === event.did;
   const buildSheet = (event: Stored<Event>) => reconcile({
     event, classes: svc.ticketClassesFor(event),
     orders: store.listReferencing<Order>(C.order, event.uri, 100_000), tickets: store.listReferencing<Ticket>(C.ticket, event.uri, 100_000),
     scans: store.listReferencing<DoorScanRecord>(C.doorScan, event.uri, 100_000), donations: store.listReferencing<DonationRecord>(C.donation, event.uri, 100_000),
   });
-  app.get("/e/:did/:rkey/reconciliation", (c) => {
+  app.get("/e/:did/:rkey/reconciliation", async (c) => {
     const event = store.get<Event>(c.req.param("did"), C.event, c.req.param("rkey"));
     if (!event) return c.notFound();
     c.header("Cache-Control", "private, no-store");
-    if (!sheetAuth(c, event)) return c.html(doorCodePrompt(event.record.title, `/e/${event.did}/${event.rkey}/reconciliation`), 401);
+    if (!(await sheetAuth(c, event))) return c.html(doorCodePrompt(event.record.title, `/e/${event.did}/${event.rkey}/reconciliation`), 401);
     return c.html(reconciliationPage(buildSheet(event), `/e/${event.did}/${event.rkey}`));
   });
   app.post("/e/:did/:rkey/reconciliation", async (c) => {
@@ -124,10 +128,10 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
     return c.redirect(`/e/${event.did}/${event.rkey}/reconciliation`, 303);
   });
   for (const [path, fn, name] of [["reconciliation.csv", summaryCsv, "reconciliation"], ["attendance.csv", attendanceCsv, "attendance"]] as const) {
-    app.get(`/e/:did/:rkey/${path}`, (c) => {
+    app.get(`/e/:did/:rkey/${path}`, async (c) => {
       const event = store.get<Event>(c.req.param("did"), C.event, c.req.param("rkey"));
       if (!event) return c.notFound();
-      if (!sheetAuth(c, event)) return c.text("organizer access required", 401);
+      if (!(await sheetAuth(c, event))) return c.text("organizer access required", 401);
       return c.body(fn(buildSheet(event)), 200, { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${name}-${event.rkey}.csv"`, "Cache-Control": "private, no-store" });
     });
   }
@@ -228,7 +232,7 @@ export function createApp(db: DatabaseSync, lex: Lexicons, cfg: AppConfig) {
     return eventPage({ org, event, classes, performances, program, baseUrl: cfg.baseUrl, ...(notice ? { notice } : {}) });
   }
 
-  return { app, store, keys, svc };
+  return { app, store, keys, svc, auth };
 }
 
 function firstOrg(store: RecordStore, did: string): Stored<Organization> | null {

@@ -14,7 +14,7 @@ const ADMIN = "test-admin-token";
 async function fresh() {
   const db = openDb(":memory:");
   const built = createApp(db, loadLexicons(), { baseUrl: BASE, adminToken: ADMIN });
-  await seedDemo(built.store, built.keys);
+  await seedDemo(built.store, built.keys, built.auth);
   return built;
 }
 const EVENT_PATH = `/e/${DEMO_DID}/${DEMO_EVENT_RKEY}`;
