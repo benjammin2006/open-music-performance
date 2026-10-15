@@ -12,9 +12,16 @@
   "scripts": {
     "schema:check": "npm run check -w @omp/schemas",
     "schema:docs": "npm run docs -w @omp/schemas",
-    "test": "npm run schema:check"
+    "test": "npm run schema:check && npm run test -w @omp/tickets",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "typecheck": "npm run typecheck -w @omp/tickets",
+    "build": "npm run build -w @omp/tickets"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "@types/node": "^24.0.0"
   }
 }

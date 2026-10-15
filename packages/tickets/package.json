@@ -1,0 +1,16 @@
+{
+  "name": "@omp/tickets",
+  "version": "0.1.0",
+  "description": "Signed, offline-verifiable admission tokens for Open Music Performance: Ed25519 tokens, a bitstring status list for revocation, and a door ledger for duplicate detection.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "test": "node --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json"
+  }
+}
