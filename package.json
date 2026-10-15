@@ -16,8 +16,8 @@
     "prepare": "git config core.hooksPath .githooks || true",
     "typecheck": "npm run typecheck -w @omp/tickets && npm run typecheck -w @omp/server",
     "build": "npm run build -w @omp/tickets",
-    "dev": "npm run dev -w @omp/server",
-    "seed": "npm run seed -w @omp/server"
+    "dev": "OMP_ROOT=$PWD npm run dev -w @omp/server",
+    "seed": "OMP_ROOT=$PWD npm run seed -w @omp/server"
   },
   "engines": {
     "node": ">=20"

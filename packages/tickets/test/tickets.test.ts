@@ -20,7 +20,7 @@ import {
 } from "../src/index.ts";
 
 const ORG = "did:web:lincolnbands.example";
-const NOW = 1_765_843_200; // 2026-12-16T00:00:00Z, doors night for the fixture event
+const NOW = 1_797_379_200; // 2026-12-16T00:00:00Z, doors night for the fixture event
 
 async function setup() {
   const key = await generateIssuerKey("lincoln-2026-1");

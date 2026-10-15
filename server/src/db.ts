@@ -1,8 +1,15 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 
-export function openDb(path: string): DatabaseSync {
+/** Relative paths resolve against OMP_ROOT if set, else the process cwd, so `npm run seed` from any workspace hits the same file. */
+export function resolveDbPath(path: string): string {
+  if (path === ":memory:" || isAbsolute(path)) return path;
+  return resolve(process.env["OMP_ROOT"] ?? process.cwd(), path);
+}
+
+export function openDb(rawPath: string): DatabaseSync {
+  const path = resolveDbPath(rawPath);
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
